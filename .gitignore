@@ -1,0 +1,52 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+Asset[Ss]tore[Tt]ools/
+
+# IDE
+.vs/
+.vscode/
+.zed/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Builds
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Crashlytics
+crashlytics-build.properties
+sysinfo.txt
+
+# Plugins (keep meta files, ignore binaries that get regenerated)
+/[Aa]ssets/Plugins/Android/
+/[Aa]ssets/Plugins/iOS/
+
+
+# Claude auto-memory
+.claude/memory/
