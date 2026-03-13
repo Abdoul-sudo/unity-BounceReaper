@@ -74,6 +74,17 @@ Assets/
 
 - Brainstorming session: `_bmad-output/brainstorming-session-2026-03-08.md`
 - Monetization details: `_bmad-output/monetisation-bounce-reaper.md`
+- **Game Architecture:** `_bmad-output/game-architecture.md` — 8 ADR, patterns, project structure
+- **Project Context (AI rules):** `_bmad-output/project-context.md` — 95 critical rules for agents
+- **Implementation Sequence:** `_bmad-output/implementation-sequence.md` — ordered build plan
+
+## Implementation Workflow
+
+- **No formal stories/epics** — architecture + project-context are the specs
+- **Phase 1 (Core, Data, SaveManager):** `/bmad-gds-quick-dev` direct — architecture has all code examples
+- **Phase 2-3 (Gameplay, Polish):** `/bmad-gds-quick-spec` (5 min) then `/bmad-gds-quick-dev`
+- **Always read** `project-context.md` before implementing any system
+- **Dependency order:** Core → Data → SaveManager → Currency/Upgrade → Ball/Enemy → Wave → VFX/UI/Input/Audio
 
 ## BMAD Framework
 
