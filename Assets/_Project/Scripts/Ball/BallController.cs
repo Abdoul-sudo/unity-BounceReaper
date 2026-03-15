@@ -38,8 +38,12 @@ namespace BounceReaper
             if (!_initialized) return;
             if (collision.gameObject.layer != _enemyLayer) return;
 
+            var enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();
+            if (enemyHealth == null || enemyHealth.IsDead) return;
+
             float damage = _stats.BaseDamage;
-            GameEvents.Raise(GameEvents.OnEnemyHit, collision.gameObject, damage);
+            Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
+            enemyHealth.TakeDamage(damage, hitDirection);
         }
 
         private void OnDisable()
