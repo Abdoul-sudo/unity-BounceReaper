@@ -88,7 +88,21 @@ namespace BounceReaper.Editor
             string prefabPath = $"{PrefabPath}/Ball/Ball_Basic.prefab";
             if (AssetExists(prefabPath))
             {
-                Debug.Log("[Setup] Ball_Basic.prefab already exists, skipping.");
+                // Update existing prefab scale
+                var existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                if (existingPrefab != null && existingPrefab.transform.localScale.x < 0.6f)
+                {
+                    var instance = (GameObject)PrefabUtility.InstantiatePrefab(existingPrefab);
+                    instance.transform.localScale = Vector3.one * 0.7f;
+                    PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
+                    Object.DestroyImmediate(instance);
+                    Debug.Log("[Setup] Updated Ball_Basic.prefab scale to 0.7");
+                }
+                else
+                {
+                    Debug.Log("[Setup] Ball_Basic.prefab already up to date.");
+                }
+                AssetDatabase.SaveAssets();
                 return;
             }
 
@@ -99,7 +113,7 @@ namespace BounceReaper.Editor
             sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
             sr.color = new Color(0.3f, 0.8f, 1f, 1f); // neon blue
             sr.sortingOrder = GameConstants.SortOrderBalls;
-            ballGO.transform.localScale = Vector3.one * 0.5f;
+            ballGO.transform.localScale = Vector3.one * 0.7f;
 
             // Rigidbody2D
             var rb = ballGO.AddComponent<Rigidbody2D>();
@@ -136,12 +150,15 @@ namespace BounceReaper.Editor
         public static void CreateArenaAndManagers()
         {
             // Arena
-            if (GameObject.Find("Arena") == null)
+            var existingArena = GameObject.Find("Arena");
+            if (existingArena != null)
+                Object.DestroyImmediate(existingArena);
+
             {
                 var arena = new GameObject("Arena");
 
-                float halfWidth = 8f;  // 16:9 ratio
-                float halfHeight = 4.5f;
+                float halfWidth = 2.75f;   // 9:16 portrait (~5.5 wide)
+                float halfHeight = 4.75f;  // ~9.5 tall
                 float wallThickness = 0.5f;
 
                 CreateWall("Wall_Top", arena.transform, new Vector3(0, halfHeight + wallThickness / 2, 0), new Vector2(halfWidth * 2 + wallThickness * 2, wallThickness));
@@ -182,14 +199,17 @@ namespace BounceReaper.Editor
                 Debug.Log("[Setup] BallManager created with references assigned");
             }
 
-            // Camera setup
+            // Camera setup — portrait 9:16
             var cam = Camera.main;
             if (cam != null)
             {
                 cam.transform.position = new Vector3(0, 0, -10);
                 cam.orthographicSize = 5.5f;
-                cam.backgroundColor = new Color(0.05f, 0.05f, 0.1f, 1f); // dark neon background
+                cam.backgroundColor = new Color(0.04f, 0.04f, 0.1f, 1f); // dark neon background #0A0A1A
             }
+
+            // Player Settings — Portrait orientation
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
 
             // Mark scene dirty
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
