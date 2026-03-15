@@ -12,6 +12,9 @@ namespace BounceReaper
         [SerializeField] private Transform _spawnPoint;
         [SerializeField] private GameConfig _gameConfig;
 
+        [Header("Startup")]
+        [SerializeField] [Range(0, 5)] private int _startingBalls = 1;
+
         [Header("Pool")]
         [SerializeField] [Range(1, 10)] private int _poolWarmup = 3;
         [SerializeField] [Range(5, 50)] private int _poolMaxSize = 30;
@@ -109,6 +112,9 @@ namespace BounceReaper
 
             _initialized = true;
             Debug.Log($"[Ball] Initialized — pool warmed up with {_poolWarmup} balls");
+
+            for (int i = 0; i < _startingBalls; i++)
+                SpawnBall();
         }
 
         private BallController CreateBall()
