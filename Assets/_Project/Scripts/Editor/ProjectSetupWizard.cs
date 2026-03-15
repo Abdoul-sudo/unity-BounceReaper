@@ -251,7 +251,7 @@ namespace BounceReaper.Editor
 
             var sr = wall.AddComponent<SpriteRenderer>();
             sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
-            sr.color = new Color(0.1f, 0.12f, 0.3f, 1f); // visible dark blue wall
+            sr.color = new Color(0.15f, 0.15f, 0.25f, 1f); // dark wall
             sr.drawMode = SpriteDrawMode.Sliced;
             sr.size = size;
             sr.sortingOrder = GameConstants.SortOrderBackground;

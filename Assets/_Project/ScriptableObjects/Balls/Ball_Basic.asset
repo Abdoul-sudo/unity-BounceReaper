@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ba04e238b1948c4a9e88853a0e372e7, type: 3}
+  m_Name: Ball_Basic
+  m_EditorClassIdentifier: Assembly-CSharp::BounceReaper.BallStats
+  _baseSpeed: 8
+  _minSpeed: 6
+  _maxSpeed: 15
+  _baseDamage: 1
