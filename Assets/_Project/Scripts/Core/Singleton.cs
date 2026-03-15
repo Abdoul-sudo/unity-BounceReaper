@@ -15,7 +15,7 @@ namespace BounceReaper
                 Destroy(gameObject);
                 return;
             }
-            Instance = this;
+            Instance = this as T;
         }
 
         protected virtual void OnDestroy()
