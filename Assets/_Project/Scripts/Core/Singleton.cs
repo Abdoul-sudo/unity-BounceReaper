@@ -5,7 +5,6 @@ namespace BounceReaper
     public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         public static T Instance { get; private set; }
-        private static bool _isQuitting;
 
         protected virtual void Awake()
         {
@@ -25,15 +24,20 @@ namespace BounceReaper
 
         private void OnApplicationQuit()
         {
-            _isQuitting = true;
+            SingletonHelper.IsQuitting = true;
         }
 
-        public static bool IsAvailable => Instance != null && !_isQuitting;
+        public static bool IsAvailable => Instance != null && !SingletonHelper.IsQuitting;
+    }
+
+    public static class SingletonHelper
+    {
+        public static bool IsQuitting { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetQuittingFlag()
         {
-            _isQuitting = false;
+            IsQuitting = false;
         }
     }
 }
