@@ -222,7 +222,120 @@ namespace BounceReaper.Editor
                 "OK");
         }
 
-        [MenuItem("BounceReaper/Setup/5 - Test: Spawn a Ball", priority = 10)]
+        [MenuItem("BounceReaper/Setup/5 - Create Enemy Prefab and Wave System", priority = 5)]
+        public static void CreateEnemyAndWaveSystem()
+        {
+            EnsureDirectory($"{PrefabPath}/Enemy");
+            EnsureDirectory($"{SOPath}/Enemies");
+            EnsureDirectory($"{SOPath}/Waves");
+
+            // PhysicsMaterial2D for bouncing enemies (Diamond)
+            string matPath = $"{MaterialPath}/BallPhysics.physicsMaterial2D";
+            PhysicsMaterial2D bounceMat = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(matPath);
+
+            // Enemy prefab
+            string enemyPrefabPath = $"{PrefabPath}/Enemy/Enemy_Base.prefab";
+            if (!AssetExists(enemyPrefabPath))
+            {
+                var enemyGO = new GameObject("Enemy_Base");
+
+                var sr = enemyGO.AddComponent<SpriteRenderer>();
+                sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+                sr.color = Color.red;
+                sr.sortingOrder = GameConstants.SortOrderEnemies;
+
+                var rb = enemyGO.AddComponent<Rigidbody2D>();
+                rb.bodyType = RigidbodyType2D.Kinematic;
+                rb.gravityScale = 0f;
+                rb.freezeRotation = true;
+
+                var col = enemyGO.AddComponent<CircleCollider2D>();
+                if (bounceMat != null) col.sharedMaterial = bounceMat;
+
+                enemyGO.AddComponent<EnemyHealth>();
+                enemyGO.AddComponent<EnemyController>();
+
+                int enemyLayer = LayerMask.NameToLayer("Enemy");
+                enemyGO.layer = enemyLayer >= 0 ? enemyLayer : 7;
+
+                PrefabUtility.SaveAsPrefabAsset(enemyGO, enemyPrefabPath);
+                Object.DestroyImmediate(enemyGO);
+                Debug.Log("[Setup] Created Enemy_Base.prefab");
+            }
+
+            // Enemy Stats SOs
+            CreateEnemyStatsSO("Enemy_Triangle", 1, 0.5f, 5f, false, 0.5f, new Color(1f, 0.3f, 0.3f), 1);
+            CreateEnemyStatsSO("Enemy_Square", 3, 0.8f, 2.5f, false, 0.7f, new Color(1f, 0.6f, 0.2f), 3);
+            CreateEnemyStatsSO("Enemy_Hexagon", 5, 1.2f, 1.5f, false, 0.8f, new Color(0.8f, 0.2f, 1f), 5);
+            CreateEnemyStatsSO("Enemy_Diamond", 10, 3f, 0.5f, true, 0.6f, new Color(1f, 1f, 0.2f), 10);
+
+            // WaveConfig
+            if (!AssetExists($"{SOPath}/Waves/WaveConfig_Default.asset"))
+            {
+                var waveConfig = ScriptableObject.CreateInstance<WaveConfig>();
+                AssetDatabase.CreateAsset(waveConfig, $"{SOPath}/Waves/WaveConfig_Default.asset");
+                Debug.Log("[Setup] Created WaveConfig_Default.asset");
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // WaveManager in scene
+            if (Object.FindFirstObjectByType<WaveManager>() == null)
+            {
+                var waveManagerGO = new GameObject("WaveManager");
+                var wm = waveManagerGO.AddComponent<WaveManager>();
+
+                var so = new SerializedObject(wm);
+
+                var waveConfig = AssetDatabase.LoadAssetAtPath<WaveConfig>($"{SOPath}/Waves/WaveConfig_Default.asset");
+                var enemyPrefab = AssetDatabase.LoadAssetAtPath<EnemyController>(enemyPrefabPath);
+                var triangle = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Triangle.asset");
+                var square = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Square.asset");
+                var hexagon = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Hexagon.asset");
+                var diamond = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Diamond.asset");
+
+                if (waveConfig != null) so.FindProperty("_config").objectReferenceValue = waveConfig;
+                if (enemyPrefab != null) so.FindProperty("_enemyPrefab").objectReferenceValue = enemyPrefab;
+                if (triangle != null) so.FindProperty("_triangleStats").objectReferenceValue = triangle;
+                if (square != null) so.FindProperty("_squareStats").objectReferenceValue = square;
+                if (hexagon != null) so.FindProperty("_hexagonStats").objectReferenceValue = hexagon;
+                if (diamond != null) so.FindProperty("_diamondStats").objectReferenceValue = diamond;
+                so.ApplyModifiedProperties();
+
+                Debug.Log("[Setup] WaveManager created with references assigned");
+            }
+
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+
+            EditorUtility.DisplayDialog("Setup Complete",
+                "Enemy_Base prefab, 4 EnemyStats SOs, WaveConfig, and WaveManager created.\n\n" +
+                "Run Play Mode to see waves spawn!",
+                "OK");
+        }
+
+        private static void CreateEnemyStatsSO(string name, int hp, float speed, float dirInterval, bool usePhysics, float size, Color color, int reward)
+        {
+            string path = $"{SOPath}/Enemies/{name}.asset";
+            if (AssetExists(path)) return;
+
+            var stats = ScriptableObject.CreateInstance<EnemyStats>();
+            var so = new SerializedObject(stats);
+            so.FindProperty("_maxHP").intValue = hp;
+            so.FindProperty("_moveSpeed").floatValue = speed;
+            so.FindProperty("_directionInterval").floatValue = dirInterval;
+            so.FindProperty("_usePhysicsMovement").boolValue = usePhysics;
+            so.FindProperty("_size").floatValue = size;
+            so.FindProperty("_color").colorValue = color;
+            so.FindProperty("_shardReward").intValue = reward;
+            so.ApplyModifiedProperties();
+
+            AssetDatabase.CreateAsset(stats, path);
+            Debug.Log($"[Setup] Created {name}.asset");
+        }
+
+        [MenuItem("BounceReaper/Setup/6 - Test: Spawn a Ball", priority = 10)]
         public static void TestSpawnBall()
         {
             if (!Application.isPlaying)
