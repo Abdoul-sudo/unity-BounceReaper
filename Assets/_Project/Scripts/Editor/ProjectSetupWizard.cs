@@ -432,7 +432,64 @@ namespace BounceReaper.Editor
             Debug.Log($"[Setup] {soName} sprite + tint updated");
         }
 
-        [MenuItem("BounceReaper/Setup/7 - Test: Spawn a Ball", priority = 10)]
+        [MenuItem("BounceReaper/Setup/7 - Fix Enemy Sizes and Movement", priority = 7)]
+        public static void FixEnemySizes()
+        {
+            // Smaller sizes, no movement (static enemies), bigger collider via size
+            FixEnemySO("Enemy_Triangle", hp: 1, speed: 0f, size: 0.3f, reward: 1);
+            FixEnemySO("Enemy_Square", hp: 3, speed: 0f, size: 0.4f, reward: 3);
+            FixEnemySO("Enemy_Hexagon", hp: 5, speed: 0f, size: 0.45f, reward: 5);
+            FixEnemySO("Enemy_Diamond", hp: 10, speed: 0f, size: 0.35f, reward: 10);
+
+            // Also update enemy prefab collider radius
+            string enemyPrefabPath = $"{PrefabPath}/Enemy/Enemy_Base.prefab";
+            if (AssetExists(enemyPrefabPath))
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(enemyPrefabPath);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                var col = instance.GetComponent<CircleCollider2D>();
+                if (col != null)
+                    col.radius = 1.5f; // bigger hitbox relative to sprite
+                PrefabUtility.SaveAsPrefabAsset(instance, enemyPrefabPath);
+                Object.DestroyImmediate(instance);
+                Debug.Log("[Setup] Enemy prefab collider radius updated");
+            }
+
+            // Also fix ball prefab size
+            string ballPrefabPath = $"{PrefabPath}/Ball/Ball_Basic.prefab";
+            if (AssetExists(ballPrefabPath))
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ballPrefabPath);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                instance.transform.localScale = Vector3.one * 0.25f;
+                PrefabUtility.SaveAsPrefabAsset(instance, ballPrefabPath);
+                Object.DestroyImmediate(instance);
+                Debug.Log("[Setup] Ball prefab scale updated to 0.25");
+            }
+
+            AssetDatabase.SaveAssets();
+            EditorUtility.DisplayDialog("Fixed!",
+                "Enemies: smaller, static (no movement), bigger hitbox.\nBall: bigger.\n\nPlay to test!",
+                "OK");
+        }
+
+        private static void FixEnemySO(string soName, int hp, float speed, float size, int reward)
+        {
+            string path = $"{SOPath}/Enemies/{soName}.asset";
+            if (!AssetExists(path)) return;
+
+            var stats = AssetDatabase.LoadAssetAtPath<EnemyStats>(path);
+            var so = new SerializedObject(stats);
+            so.FindProperty("_maxHP").intValue = hp;
+            so.FindProperty("_moveSpeed").floatValue = speed;
+            so.FindProperty("_size").floatValue = size;
+            so.FindProperty("_shardReward").intValue = reward;
+            so.FindProperty("_usePhysicsMovement").boolValue = false;
+            so.ApplyModifiedProperties();
+            Debug.Log($"[Setup] Fixed {soName}: size={size}, speed={speed}");
+        }
+
+        [MenuItem("BounceReaper/Setup/8 - Test: Spawn a Ball", priority = 10)]
         public static void TestSpawnBall()
         {
             if (!Application.isPlaying)
