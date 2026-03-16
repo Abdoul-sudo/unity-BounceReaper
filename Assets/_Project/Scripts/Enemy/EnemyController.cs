@@ -10,6 +10,10 @@ namespace BounceReaper
         [Header("Config")]
         [SerializeField] private EnemyStats _stats;
 
+        [Header("Arena Bounds")]
+        [SerializeField] private float _arenaHalfWidth = 2.75f;
+        [SerializeField] private float _arenaHalfHeight = 4.75f;
+
         // 2. Private fields
         private EnemyHealth _health;
         private Rigidbody2D _rb;
@@ -46,6 +50,7 @@ namespace BounceReaper
             }
 
             transform.Translate(_moveDirection * (_stats.MoveSpeed * Time.deltaTime));
+            ClampToArena();
         }
 
         // 5. Public API
@@ -105,6 +110,21 @@ namespace BounceReaper
         {
             float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
             _moveDirection = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+        }
+
+        private void ClampToArena()
+        {
+            var pos = transform.position;
+            float padding = _stats != null ? _stats.Size * 0.5f : 0.25f;
+
+            bool clamped = false;
+
+            if (pos.x < -_arenaHalfWidth + padding) { pos.x = -_arenaHalfWidth + padding; _moveDirection.x = Mathf.Abs(_moveDirection.x); clamped = true; }
+            if (pos.x > _arenaHalfWidth - padding) { pos.x = _arenaHalfWidth - padding; _moveDirection.x = -Mathf.Abs(_moveDirection.x); clamped = true; }
+            if (pos.y < -_arenaHalfHeight + padding) { pos.y = -_arenaHalfHeight + padding; _moveDirection.y = Mathf.Abs(_moveDirection.y); clamped = true; }
+            if (pos.y > _arenaHalfHeight - padding) { pos.y = _arenaHalfHeight - padding; _moveDirection.y = -Mathf.Abs(_moveDirection.y); clamped = true; }
+
+            if (clamped) transform.position = pos;
         }
     }
 }
