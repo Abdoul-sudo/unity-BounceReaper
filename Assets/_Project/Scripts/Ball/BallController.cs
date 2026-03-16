@@ -81,7 +81,24 @@ namespace BounceReaper
 
         private void ClampSpeed()
         {
-            float speed = _rb.linearVelocity.magnitude;
+            var vel = _rb.linearVelocity;
+            float speed = vel.magnitude;
+
+            // Prevent axis-locked bouncing — nudge if too vertical or horizontal
+            if (speed > 0.1f)
+            {
+                float absX = Mathf.Abs(vel.x);
+                float absY = Mathf.Abs(vel.y);
+                float minComponent = speed * 0.15f;
+
+                if (absX < minComponent)
+                    vel.x = Mathf.Sign(vel.x == 0 ? 1 : vel.x) * minComponent * Random.Range(0.8f, 1.2f);
+                else if (absY < minComponent)
+                    vel.y = Mathf.Sign(vel.y == 0 ? 1 : vel.y) * minComponent * Random.Range(0.8f, 1.2f);
+
+                _rb.linearVelocity = vel;
+                speed = vel.magnitude;
+            }
 
             if (speed < _stats.MinSpeed && speed > 0.01f)
             {
