@@ -64,6 +64,8 @@ namespace BounceReaper
             transform.localScale = Vector3.one * stats.Size;
             if (_spriteRenderer != null)
             {
+                if (stats.EnemySprite != null)
+                    _spriteRenderer.sprite = stats.EnemySprite;
                 _spriteRenderer.color = stats.EnemyColor;
                 _spriteRenderer.sortingOrder = GameConstants.SortOrderEnemies;
             }

@@ -16,6 +16,7 @@ namespace BounceReaper
         [Header("Visuals")]
         [Range(0.3f, 1.5f)] [SerializeField] private float _size = 0.5f;
         [SerializeField] private Color _color = Color.red;
+        [SerializeField] private Sprite _sprite;
 
         [Header("Rewards")]
         [Range(1, 100)] [SerializeField] private int _shardReward = 1;
@@ -26,6 +27,7 @@ namespace BounceReaper
         public bool UsePhysicsMovement => _usePhysicsMovement;
         public float Size => _size;
         public Color EnemyColor => _color;
+        public Sprite EnemySprite => _sprite;
         public int ShardReward => _shardReward;
 
         private void OnValidate()

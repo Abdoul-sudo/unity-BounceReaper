@@ -10,6 +10,7 @@ namespace BounceReaper.Editor
         private const string SOPath = "Assets/_Project/ScriptableObjects";
         private const string PrefabPath = "Assets/_Project/Prefabs";
         private const string MaterialPath = "Assets/_Project/Art/Materials";
+        private const string BrackeysPack = "Assets/Brackeys/2D Mega Pack";
 
         [MenuItem("BounceReaper/Setup/1 - Configure Layers and Physics", priority = 1)]
         public static void SetupLayers()
@@ -335,7 +336,103 @@ namespace BounceReaper.Editor
             Debug.Log($"[Setup] Created {name}.asset");
         }
 
-        [MenuItem("BounceReaper/Setup/6 - Test: Spawn a Ball", priority = 10)]
+        [MenuItem("BounceReaper/Setup/6 - Upgrade Sprites (Brackeys Pack)", priority = 6)]
+        public static void UpgradeSprites()
+        {
+            // --- Ball sprite ---
+            string ballPrefabPath = $"{PrefabPath}/Ball/Ball_Basic.prefab";
+            var circleSprite = LoadBrackeysSprite("Shapes/Circle.png");
+            if (circleSprite != null && AssetExists(ballPrefabPath))
+            {
+                var ballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ballPrefabPath);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(ballPrefab);
+                var sr = instance.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.sprite = circleSprite;
+                    sr.color = new Color(0.3f, 0.8f, 1f, 1f); // neon blue
+                }
+                instance.transform.localScale = Vector3.one * 0.15f;
+                PrefabUtility.SaveAsPrefabAsset(instance, ballPrefabPath);
+                Object.DestroyImmediate(instance);
+                Debug.Log("[Setup] Ball sprite updated to Circle");
+            }
+
+            // --- Enemy sprites in SO ---
+            SetEnemySpriteInSO("Enemy_Triangle", "Enemies/Insects/Beetle.png", new Color(0.6f, 1f, 0.4f));
+            SetEnemySpriteInSO("Enemy_Square", "Enemies/Gothic/GothicEnemy01.png", new Color(1f, 0.6f, 0.2f));
+            SetEnemySpriteInSO("Enemy_Hexagon", "Enemies/Gothic/GothicEnemy02.png", new Color(0.8f, 0.2f, 1f));
+            SetEnemySpriteInSO("Enemy_Diamond", "Enemies/Gothic/FireheadEnemy.png", new Color(1f, 0.2f, 0.2f));
+
+            // --- Enemy prefab sprite (default) ---
+            string enemyPrefabPath = $"{PrefabPath}/Enemy/Enemy_Base.prefab";
+            var beetleSprite = LoadBrackeysSprite("Enemies/Insects/Beetle.png");
+            if (beetleSprite != null && AssetExists(enemyPrefabPath))
+            {
+                var enemyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(enemyPrefabPath);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(enemyPrefab);
+                var sr = instance.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.sprite = beetleSprite;
+                    sr.color = Color.white; // use original sprite colors
+                }
+                PrefabUtility.SaveAsPrefabAsset(instance, enemyPrefabPath);
+                Object.DestroyImmediate(instance);
+                Debug.Log("[Setup] Enemy prefab sprite updated to Beetle");
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            EditorUtility.DisplayDialog("Sprites Upgraded!",
+                "Ball → Circle sprite\n" +
+                "Triangle → Beetle\n" +
+                "Square → Gothic Enemy 01\n" +
+                "Hexagon → Gothic Enemy 02\n" +
+                "Diamond → Firehead Enemy\n\n" +
+                "Enemy sprites are stored in SO and applied at spawn via EnemyController.",
+                "OK");
+        }
+
+        private static Sprite LoadBrackeysSprite(string relativePath)
+        {
+            string fullPath = $"{BrackeysPack}/{relativePath}";
+            // Try loading as single sprite
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullPath);
+            if (sprite != null) return sprite;
+
+            // Try loading from sprite sheet (multiple mode) — get first sub-sprite
+            var allAssets = AssetDatabase.LoadAllAssetsAtPath(fullPath);
+            foreach (var asset in allAssets)
+            {
+                if (asset is Sprite s) return s;
+            }
+
+            Debug.LogWarning($"[Setup] Sprite not found at {fullPath}");
+            return null;
+        }
+
+        private static void SetEnemySpriteInSO(string soName, string spritePath, Color tintColor)
+        {
+            string soFullPath = $"{SOPath}/Enemies/{soName}.asset";
+            if (!AssetExists(soFullPath)) return;
+
+            var stats = AssetDatabase.LoadAssetAtPath<EnemyStats>(soFullPath);
+            if (stats == null) return;
+
+            var sprite = LoadBrackeysSprite(spritePath);
+
+            var so = new SerializedObject(stats);
+            so.FindProperty("_color").colorValue = tintColor;
+            if (sprite != null)
+                so.FindProperty("_sprite").objectReferenceValue = sprite;
+            so.ApplyModifiedProperties();
+
+            Debug.Log($"[Setup] {soName} sprite + tint updated");
+        }
+
+        [MenuItem("BounceReaper/Setup/7 - Test: Spawn a Ball", priority = 10)]
         public static void TestSpawnBall()
         {
             if (!Application.isPlaying)
