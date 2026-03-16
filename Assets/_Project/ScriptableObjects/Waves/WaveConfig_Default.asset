@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c33f70c88a413048aeb9ac8238fd1ef, type: 3}
+  m_Name: WaveConfig_Default
+  m_EditorClassIdentifier: Assembly-CSharp::BounceReaper.WaveConfig
+  _baseEnemyCount: 3
+  _enemyCountScaling: 1.5
+  _spawnInterval: 0.4
+  _timeBetweenWaves: 2
+  _bossEveryNWaves: 10
+  _bossTimerDuration: 45
+  _bossHPMultiplier: 3
+  _unlockSquare: 3
+  _unlockHexagon: 5
+  _unlockDiamond: 8
+  _spawnZoneTopPercent: 0.3
+  _spawnPadding: 0.5
