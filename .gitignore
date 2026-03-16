@@ -43,6 +43,12 @@ desktop.ini
 crashlytics-build.properties
 sysinfo.txt
 
+# Large audio files (5GB+ Music Pack — keep local only)
+*.wav
+*.mp3
+*.ogg
+*.aiff
+
 # Plugins (keep meta files, ignore binaries that get regenerated)
 /[Aa]ssets/Plugins/Android/
 /[Aa]ssets/Plugins/iOS/
