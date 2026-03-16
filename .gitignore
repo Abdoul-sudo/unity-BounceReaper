@@ -48,6 +48,8 @@ sysinfo.txt
 *.mp3
 *.ogg
 *.aiff
+Assets/Plugins/Ultimate Game Music Collection/
+Assets/Plugins/Ultimate Game Music Collection.meta
 
 # Plugins (keep meta files, ignore binaries that get regenerated)
 /[Aa]ssets/Plugins/Android/
