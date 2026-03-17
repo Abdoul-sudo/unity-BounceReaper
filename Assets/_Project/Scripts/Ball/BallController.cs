@@ -15,6 +15,7 @@ namespace BounceReaper
         private int _enemyLayer;
         private bool _initialized;
         private bool _returned;
+        private bool _hasLaunched;
         private float _floorY = -4.5f;
 
         // 3. Properties
@@ -35,10 +36,14 @@ namespace BounceReaper
 
             ClampSpeed();
 
-            // Check if ball hit the floor
-            if (transform.position.y <= _floorY)
+            // Check if ball hit the floor (only after it has gone up first)
+            if (_hasLaunched && _rb.linearVelocity.y < 0 && transform.position.y <= _floorY)
             {
                 OnHitFloor();
+            }
+            else if (!_hasLaunched && transform.position.y > _floorY + 0.5f)
+            {
+                _hasLaunched = true;
             }
         }
 
@@ -84,6 +89,7 @@ namespace BounceReaper
         {
             _initialized = false;
             _returned = false;
+            _hasLaunched = false;
             if (_rb != null)
                 _rb.linearVelocity = Vector2.zero;
         }

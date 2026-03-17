@@ -60,7 +60,12 @@ namespace BounceReaper
         // 5. Public API
         public void FireBalls(Vector2 direction)
         {
-            if (!_initialized || _ballsInFlight > 0) return;
+            if (!_initialized)
+            {
+                Debug.LogError("[Ball] BallManager not initialized! Check SO references in Inspector.");
+                return;
+            }
+            if (_ballsInFlight > 0) return;
 
             _ballsReturned = 0;
             _firstBallReturned = false;
