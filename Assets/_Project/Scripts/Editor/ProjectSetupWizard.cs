@@ -281,37 +281,13 @@ namespace BounceReaper.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // WaveManager in scene
-            if (Object.FindFirstObjectByType<WaveManager>() == null)
-            {
-                var waveManagerGO = new GameObject("WaveManager");
-                var wm = waveManagerGO.AddComponent<WaveManager>();
-
-                var so = new SerializedObject(wm);
-
-                var waveConfig = AssetDatabase.LoadAssetAtPath<WaveConfig>($"{SOPath}/Waves/WaveConfig_Default.asset");
-                var enemyPrefab = AssetDatabase.LoadAssetAtPath<EnemyController>(enemyPrefabPath);
-                var triangle = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Triangle.asset");
-                var square = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Square.asset");
-                var hexagon = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Hexagon.asset");
-                var diamond = AssetDatabase.LoadAssetAtPath<EnemyStats>($"{SOPath}/Enemies/Enemy_Diamond.asset");
-
-                if (waveConfig != null) so.FindProperty("_config").objectReferenceValue = waveConfig;
-                if (enemyPrefab != null) so.FindProperty("_enemyPrefab").objectReferenceValue = enemyPrefab;
-                if (triangle != null) so.FindProperty("_triangleStats").objectReferenceValue = triangle;
-                if (square != null) so.FindProperty("_squareStats").objectReferenceValue = square;
-                if (hexagon != null) so.FindProperty("_hexagonStats").objectReferenceValue = hexagon;
-                if (diamond != null) so.FindProperty("_diamondStats").objectReferenceValue = diamond;
-                so.ApplyModifiedProperties();
-
-                Debug.Log("[Setup] WaveManager created with references assigned");
-            }
+            // Note: WaveManager removed — use Setup 8 for GridManager-based scene
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
             EditorUtility.DisplayDialog("Setup Complete",
-                "Enemy_Base prefab, 4 EnemyStats SOs, WaveConfig, and WaveManager created.\n\n" +
+                "Enemy_Base prefab, 4 EnemyStats SOs, and WaveConfig created.\n\n" +
                 "Run Play Mode to see waves spawn!",
                 "OK");
         }
@@ -492,9 +468,9 @@ namespace BounceReaper.Editor
         [MenuItem("BounceReaper/Setup/8 - Setup Brick Breaker Scene", priority = 8)]
         public static void SetupBrickBreakerScene()
         {
-            // Remove old WaveManager if exists
-            var oldWave = Object.FindFirstObjectByType<WaveManager>();
-            if (oldWave != null) Object.DestroyImmediate(oldWave.gameObject);
+            // Remove old managers if they exist in scene
+            var oldWaveGO = GameObject.Find("WaveManager");
+            if (oldWaveGO != null) Object.DestroyImmediate(oldWaveGO);
 
             // Remove old BallManager if exists
             var oldBall = Object.FindFirstObjectByType<BallManager>();
