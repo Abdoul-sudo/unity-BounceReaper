@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace BounceReaper
 {
@@ -38,16 +39,31 @@ namespace BounceReaper
         {
             if (!_canAim) return;
 
-            // Mouse/touch input
-            if (Input.GetMouseButtonDown(0))
+            var mouse = Mouse.current;
+            var touch = Touchscreen.current;
+
+            bool pressed = (mouse != null && mouse.leftButton.wasPressedThisFrame)
+                        || (touch != null && touch.primaryTouch.press.wasPressedThisFrame);
+            bool held = (mouse != null && mouse.leftButton.isPressed)
+                     || (touch != null && touch.primaryTouch.press.isPressed);
+            bool released = (mouse != null && mouse.leftButton.wasReleasedThisFrame)
+                         || (touch != null && touch.primaryTouch.press.wasReleasedThisFrame);
+
+            Vector2 screenPos = Vector2.zero;
+            if (mouse != null && mouse.leftButton.isPressed)
+                screenPos = mouse.position.ReadValue();
+            else if (touch != null && touch.primaryTouch.press.isPressed)
+                screenPos = touch.primaryTouch.position.ReadValue();
+
+            if (pressed)
             {
                 StartAim();
             }
-            else if (Input.GetMouseButton(0) && _isAiming)
+            else if (held && _isAiming)
             {
-                UpdateAim();
+                UpdateAim(screenPos);
             }
-            else if (Input.GetMouseButtonUp(0) && _isAiming)
+            else if (released && _isAiming)
             {
                 ReleaseAim();
             }
@@ -75,12 +91,12 @@ namespace BounceReaper
                 _aimLine.enabled = true;
         }
 
-        private void UpdateAim()
+        private void UpdateAim(Vector2 screenPos)
         {
             if (!BallManager.IsAvailable) return;
 
             Vector2 launchPos = BallManager.Instance.LaunchPosition;
-            Vector2 mouseWorld = _camera.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mouseWorld = _camera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 0));
 
             _aimDirection = (mouseWorld - launchPos).normalized;
 
