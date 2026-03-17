@@ -7,30 +7,33 @@ namespace BounceReaper
     {
         // 1. SerializeField
         [Header("Knockback")]
-        [SerializeField] private float _knockbackStrength = 0.3f;
-        [SerializeField] private float _knockbackDuration = 0.15f;
+        [SerializeField] private float _knockbackStrength = 0.1f;
+        [SerializeField] private float _knockbackDuration = 0.1f;
 
         // 2. Private fields
         private int _currentHP;
-        private EnemyStats _stats;
         private bool _isDead;
+        private EnemyController _controller;
 
         // 3. Properties
         public int CurrentHP => _currentHP;
         public bool IsDead => _isDead;
 
         // 4. Lifecycle
+        private void Awake()
+        {
+            _controller = GetComponent<EnemyController>();
+        }
+
         private void OnDisable()
         {
             DOTween.Kill(transform);
         }
 
         // 5. Public API
-        public void Initialize(EnemyStats stats)
+        public void Initialize(int maxHP)
         {
-            Debug.Assert(stats != null, "[Enemy] EnemyStats is null in Initialize");
-            _stats = stats;
-            _currentHP = stats.MaxHP;
+            _currentHP = maxHP;
             _isDead = false;
         }
 
@@ -40,7 +43,7 @@ namespace BounceReaper
 
             _currentHP -= Mathf.RoundToInt(damage);
 
-            GameEvents.Raise(GameEvents.OnEnemyHit, gameObject, damage);
+            GameEvents.Raise(GameEvents.OnBlockHit, gameObject, damage);
 
             // Knockback via DOTween
             DOTween.Kill(transform);
@@ -50,6 +53,10 @@ namespace BounceReaper
                 vibrato: 0,
                 elasticity: 0
             ).SetUpdate(true);
+
+            // Update HP display
+            if (_controller != null)
+                _controller.UpdateHPDisplay();
 
             if (_currentHP <= 0)
             {
@@ -61,7 +68,7 @@ namespace BounceReaper
         private void Die()
         {
             _isDead = true;
-            GameEvents.Raise(GameEvents.OnEnemyKilled, gameObject);
+            GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
         }
 
         public void ResetHealth()

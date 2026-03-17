@@ -7,9 +7,17 @@ namespace BounceReaper
         MainMenu,
         Loading,
         Playing,
-        BossFight,
-        Victory,
-        Defeat,
-        Pause
+        Pause,
+        GameOver
+    }
+
+    public enum TurnPhase
+    {
+        None = 0,
+        Aiming,
+        Firing,
+        Resolving,
+        EnemyPhase,
+        CheckEnd
     }
 }

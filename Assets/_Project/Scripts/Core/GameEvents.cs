@@ -8,14 +8,18 @@ namespace BounceReaper
         // Game State
         public static Action<GameState> OnGameStateChanged;
 
-        // Combat
-        public static Action<GameObject, float> OnEnemyHit;
-        public static Action<GameObject> OnEnemyKilled;
+        // Turn
+        public static Action OnTurnStart;
+        public static Action OnTurnEnd;
+        public static Action OnAllBallsReturned;
 
-        // Wave
+        // Block/Combat
+        public static Action<GameObject, float> OnBlockHit;
+        public static Action<GameObject> OnBlockDestroyed;
+        public static Action OnBlockReachedBottom;
+
+        // Wave/Grid
         public static Action<int> OnWaveComplete;
-        public static Action<GameObject> OnBossSpawn;
-        public static Action OnBossEscaped;
 
         // Economy
         public static Action<CurrencyType, int> OnCurrencyChanged;
@@ -23,10 +27,13 @@ namespace BounceReaper
 
         // Ball
         public static Action<GameObject> OnBallSpawned;
+        public static Action<Vector2> OnBallReturned; // position where ball hit the floor
+
+        // Power-ups
+        public static Action<int> OnBallCountChanged; // total ball count
 
         /// <summary>
         /// Safe invoke that catches per-subscriber exceptions.
-        /// Prevents one buggy listener from killing the entire event chain.
         /// </summary>
         public static void Raise<T>(Action<T> action, T arg)
         {
@@ -62,14 +69,18 @@ namespace BounceReaper
         private static void ResetStatics()
         {
             OnGameStateChanged = null;
-            OnEnemyHit = null;
-            OnEnemyKilled = null;
+            OnTurnStart = null;
+            OnTurnEnd = null;
+            OnAllBallsReturned = null;
+            OnBlockHit = null;
+            OnBlockDestroyed = null;
+            OnBlockReachedBottom = null;
             OnWaveComplete = null;
-            OnBossSpawn = null;
-            OnBossEscaped = null;
             OnCurrencyChanged = null;
             OnUpgradePurchased = null;
             OnBallSpawned = null;
+            OnBallReturned = null;
+            OnBallCountChanged = null;
         }
     }
 }

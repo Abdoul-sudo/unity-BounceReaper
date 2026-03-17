@@ -14,28 +14,37 @@ namespace BounceReaper
         private Rigidbody2D _rb;
         private int _enemyLayer;
         private bool _initialized;
+        private bool _returned;
+        private float _floorY = -4.5f;
 
         // 3. Properties
         public BallStats Stats => _stats;
+        public bool HasReturned => _returned;
 
         // 4. Lifecycle
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
             _enemyLayer = LayerMask.NameToLayer(GameConstants.LayerEnemy);
-
             Debug.Assert(_rb != null, $"[Ball] Missing Rigidbody2D on {gameObject.name}");
         }
 
         private void FixedUpdate()
         {
-            if (!_initialized) return;
+            if (!_initialized || _returned) return;
+
             ClampSpeed();
+
+            // Check if ball hit the floor
+            if (transform.position.y <= _floorY)
+            {
+                OnHitFloor();
+            }
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!_initialized) return;
+            if (!_initialized || _returned) return;
             if (collision.gameObject.layer != _enemyLayer) return;
 
             var enemyHealth = collision.gameObject.GetComponent<EnemyHealth>();
@@ -48,10 +57,7 @@ namespace BounceReaper
 
         private void OnDisable()
         {
-            #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // DOTween cleanup for pooled objects
-            // DG.Tweening.DOTween.Kill(gameObject);
-            #endif
+            DG.Tweening.DOTween.Kill(gameObject);
         }
 
         // 5. Public API
@@ -60,23 +66,38 @@ namespace BounceReaper
             Debug.Assert(stats != null, "[Ball] BallStats is null in Initialize");
             _stats = stats;
             _initialized = true;
+            _returned = false;
+        }
 
-            LaunchInRandomDirection();
+        public void Launch(Vector2 direction)
+        {
+            _returned = false;
+            _rb.linearVelocity = direction.normalized * _stats.BaseSpeed;
+        }
+
+        public void SetFloorY(float y)
+        {
+            _floorY = y;
         }
 
         public void ResetBall()
         {
             _initialized = false;
+            _returned = false;
             if (_rb != null)
                 _rb.linearVelocity = Vector2.zero;
         }
 
         // 6. Private methods
-        private void LaunchInRandomDirection()
+        private void OnHitFloor()
         {
-            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-            var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            _rb.linearVelocity = direction * _stats.BaseSpeed;
+            _returned = true;
+            Vector2 returnPos = new Vector2(transform.position.x, _floorY);
+            _rb.linearVelocity = Vector2.zero;
+            transform.position = new Vector3(returnPos.x, _floorY, 0);
+            gameObject.SetActive(false);
+
+            GameEvents.Raise(GameEvents.OnBallReturned, returnPos);
         }
 
         private void ClampSpeed()
@@ -84,7 +105,7 @@ namespace BounceReaper
             var vel = _rb.linearVelocity;
             float speed = vel.magnitude;
 
-            // Prevent axis-locked bouncing — nudge if too vertical or horizontal
+            // Prevent axis-locked bouncing
             if (speed > 0.1f)
             {
                 float absX = Mathf.Abs(vel.x);

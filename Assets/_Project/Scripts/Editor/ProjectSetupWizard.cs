@@ -489,23 +489,164 @@ namespace BounceReaper.Editor
             Debug.Log($"[Setup] Fixed {soName}: size={size}, speed={speed}");
         }
 
-        [MenuItem("BounceReaper/Setup/8 - Test: Spawn a Ball", priority = 10)]
-        public static void TestSpawnBall()
+        [MenuItem("BounceReaper/Setup/8 - Setup Brick Breaker Scene", priority = 8)]
+        public static void SetupBrickBreakerScene()
         {
-            if (!Application.isPlaying)
+            // Remove old WaveManager if exists
+            var oldWave = Object.FindFirstObjectByType<WaveManager>();
+            if (oldWave != null) Object.DestroyImmediate(oldWave.gameObject);
+
+            // Remove old BallManager if exists
+            var oldBall = Object.FindFirstObjectByType<BallManager>();
+            if (oldBall != null) Object.DestroyImmediate(oldBall.gameObject);
+
+            // Create block prefab with TMP
+            string blockPrefabPath = $"{PrefabPath}/Enemy/Block_Base.prefab";
+            if (!AssetExists(blockPrefabPath))
             {
-                EditorUtility.DisplayDialog("Error", "Enter Play Mode first, then use this menu to spawn a ball.", "OK");
-                return;
+                EnsureDirectory($"{PrefabPath}/Enemy");
+                var blockGO = new GameObject("Block_Base");
+
+                var sr = blockGO.AddComponent<SpriteRenderer>();
+                sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+                sr.color = Color.green;
+                sr.sortingOrder = GameConstants.SortOrderEnemies;
+                sr.drawMode = SpriteDrawMode.Sliced;
+                sr.size = new Vector2(0.9f, 0.9f);
+
+                var rb = blockGO.AddComponent<Rigidbody2D>();
+                rb.bodyType = RigidbodyType2D.Kinematic;
+                rb.gravityScale = 0f;
+                rb.freezeRotation = true;
+
+                var col = blockGO.AddComponent<BoxCollider2D>();
+                col.size = new Vector2(0.9f, 0.9f);
+
+                blockGO.AddComponent<EnemyHealth>();
+                blockGO.AddComponent<EnemyController>();
+
+                int enemyLayer = LayerMask.NameToLayer("Enemy");
+                blockGO.layer = enemyLayer >= 0 ? enemyLayer : 7;
+
+                // HP Text
+                var textGO = new GameObject("HPText");
+                textGO.transform.SetParent(blockGO.transform);
+                textGO.transform.localPosition = Vector3.zero;
+                var tmp = textGO.AddComponent<TMPro.TextMeshPro>();
+                tmp.alignment = TMPro.TextAlignmentOptions.Center;
+                tmp.fontSize = 4;
+                tmp.color = Color.white;
+                tmp.sortingOrder = GameConstants.SortOrderDamageNumbers;
+                var tmpRect = textGO.GetComponent<RectTransform>();
+                tmpRect.sizeDelta = new Vector2(1f, 1f);
+
+                PrefabUtility.SaveAsPrefabAsset(blockGO, blockPrefabPath);
+                Object.DestroyImmediate(blockGO);
+                Debug.Log("[Setup] Created Block_Base.prefab with HP text");
             }
 
-            if (BallManager.IsAvailable)
+            // BallManager
+            if (Object.FindFirstObjectByType<BallManager>() == null)
             {
-                BallManager.Instance.SpawnBall();
+                var bmGO = new GameObject("BallManager");
+                var bm = bmGO.AddComponent<BallManager>();
+
+                var so = new SerializedObject(bm);
+                var gameConfig = AssetDatabase.LoadAssetAtPath<GameConfig>($"{SOPath}/Config/GameConfig.asset");
+                var ballStats = AssetDatabase.LoadAssetAtPath<BallStats>($"{SOPath}/Balls/Ball_Basic.asset");
+                var ballPrefab = AssetDatabase.LoadAssetAtPath<BallController>($"{PrefabPath}/Ball/Ball_Basic.prefab");
+
+                if (gameConfig != null) so.FindProperty("_gameConfig").objectReferenceValue = gameConfig;
+                if (ballStats != null) so.FindProperty("_defaultStats").objectReferenceValue = ballStats;
+                if (ballPrefab != null) so.FindProperty("_ballPrefab").objectReferenceValue = ballPrefab;
+                so.ApplyModifiedProperties();
+                Debug.Log("[Setup] BallManager created");
+            }
+
+            // GridManager
+            if (Object.FindFirstObjectByType<GridManager>() == null)
+            {
+                var gmGO = new GameObject("GridManager");
+                var gm = gmGO.AddComponent<GridManager>();
+
+                var so = new SerializedObject(gm);
+                var blockPrefab = AssetDatabase.LoadAssetAtPath<EnemyController>(blockPrefabPath);
+                if (blockPrefab != null) so.FindProperty("_blockPrefab").objectReferenceValue = blockPrefab;
+
+                var blockSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+                if (blockSprite != null) so.FindProperty("_blockSprite").objectReferenceValue = blockSprite;
+                so.ApplyModifiedProperties();
+                Debug.Log("[Setup] GridManager created");
+            }
+
+            // AimController
+            AimController aimCtrl = null;
+            if (Object.FindFirstObjectByType<AimController>() == null)
+            {
+                var aimGO = new GameObject("AimController");
+                aimCtrl = aimGO.AddComponent<AimController>();
+
+                // Add LineRenderer for aim line
+                var lr = aimGO.AddComponent<LineRenderer>();
+                lr.startWidth = 0.05f;
+                lr.endWidth = 0.02f;
+                lr.material = new Material(Shader.Find("Sprites/Default"));
+                lr.startColor = new Color(1f, 1f, 1f, 0.5f);
+                lr.endColor = new Color(1f, 1f, 1f, 0.1f);
+                lr.sortingOrder = GameConstants.SortOrderUI;
+                lr.positionCount = 2;
+                lr.enabled = false;
+
+                var aimSo = new SerializedObject(aimCtrl);
+                aimSo.FindProperty("_aimLine").objectReferenceValue = lr;
+                aimSo.ApplyModifiedProperties();
+
+                Debug.Log("[Setup] AimController created with LineRenderer");
             }
             else
             {
-                Debug.LogError("[Setup] BallManager not available. Is it in the scene?");
+                aimCtrl = Object.FindFirstObjectByType<AimController>();
             }
+
+            // TurnManager
+            if (Object.FindFirstObjectByType<TurnManager>() == null)
+            {
+                var tmGO = new GameObject("TurnManager");
+                var tm = tmGO.AddComponent<TurnManager>();
+
+                var so = new SerializedObject(tm);
+                if (aimCtrl != null) so.FindProperty("_aimController").objectReferenceValue = aimCtrl;
+                so.ApplyModifiedProperties();
+                Debug.Log("[Setup] TurnManager created");
+            }
+
+            // Remove bottom wall (balls fall through)
+            var arena = GameObject.Find("Arena");
+            if (arena != null)
+            {
+                var bottomWall = arena.transform.Find("Wall_Bottom");
+                if (bottomWall != null)
+                    Object.DestroyImmediate(bottomWall.gameObject);
+                Debug.Log("[Setup] Removed bottom wall (balls fall through)");
+            }
+
+            // Remove SpawnPoint (no longer needed)
+            var spawnPoint = GameObject.Find("SpawnPoint");
+            if (spawnPoint != null) Object.DestroyImmediate(spawnPoint);
+
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+                UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+
+            EditorUtility.DisplayDialog("Brick Breaker Setup Complete!",
+                "Scene configured for PunBall-style gameplay:\n\n" +
+                "- Block prefab with HP display\n" +
+                "- BallManager (volley mode)\n" +
+                "- GridManager (block grid)\n" +
+                "- AimController (touch/mouse aiming)\n" +
+                "- TurnManager (turn-based phases)\n" +
+                "- Bottom wall removed\n\n" +
+                "Play Mode: Click and drag to aim, release to fire!",
+                "OK");
         }
 
         // --- Helpers ---

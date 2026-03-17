@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -9,23 +10,35 @@ namespace BounceReaper
         [Header("Config")]
         [SerializeField] private BallStats _defaultStats;
         [SerializeField] private BallController _ballPrefab;
-        [SerializeField] private Transform _spawnPoint;
         [SerializeField] private GameConfig _gameConfig;
 
-        [Header("Startup")]
-        [SerializeField] [Range(0, 5)] private int _startingBalls = 1;
+        [Header("Firing")]
+        [SerializeField] private float _fireDelay = 0.08f;
+        [SerializeField] private float _floorY = -4.5f;
 
         [Header("Pool")]
-        [SerializeField] [Range(1, 10)] private int _poolWarmup = 3;
-        [SerializeField] [Range(5, 50)] private int _poolMaxSize = 30;
+        [SerializeField] [Range(1, 10)] private int _poolWarmup = 5;
+        [SerializeField] [Range(10, 100)] private int _poolMaxSize = 60;
 
         // 2. Private fields
         private ObjectPool<BallController> _pool;
-        private int _activeBallCount;
+        private int _ballCount = 1;
+        private int _ballsInFlight;
+        private int _ballsReturned;
+        private Vector2 _launchPosition;
+        private Vector2 _nextLaunchPosition;
+        private bool _firstBallReturned;
         private bool _initialized;
+        private Coroutine _fireCoroutine;
+
+        // Cached
+        private WaitForSeconds _waitFireDelay;
 
         // 3. Properties
-        public int ActiveBallCount => _activeBallCount;
+        public int BallCount => _ballCount;
+        public int BallsInFlight => _ballsInFlight;
+        public Vector2 LaunchPosition => _launchPosition;
+        public bool IsFiring => _ballsInFlight > 0;
 
         // 4. Lifecycle
         protected override void Awake()
@@ -36,54 +49,46 @@ namespace BounceReaper
 
         private void OnEnable()
         {
-            GameEvents.OnGameStateChanged += HandleGameStateChanged;
+            GameEvents.OnBallReturned += HandleBallReturned;
         }
 
         private void OnDisable()
         {
-            GameEvents.OnGameStateChanged -= HandleGameStateChanged;
+            GameEvents.OnBallReturned -= HandleBallReturned;
         }
 
         // 5. Public API
-        public void SpawnBall()
+        public void FireBalls(Vector2 direction)
         {
-            if (!_initialized) return;
+            if (!_initialized || _ballsInFlight > 0) return;
 
-            if (_activeBallCount >= _gameConfig.MaxVisualBalls)
-            {
-                Debug.LogWarning($"[Ball] Max visual balls reached ({_gameConfig.MaxVisualBalls})");
-                return;
-            }
+            _ballsReturned = 0;
+            _firstBallReturned = false;
+            _nextLaunchPosition = _launchPosition;
 
-            var ball = _pool.Get();
-            ball.transform.position = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
-            ball.gameObject.SetActive(true);
-            ball.Initialize(_defaultStats);
+            if (_fireCoroutine != null) StopCoroutine(_fireCoroutine);
+            _fireCoroutine = StartCoroutine(FireVolleyCoroutine(direction));
 
-            _activeBallCount++;
-
-            GameEvents.Raise(GameEvents.OnBallSpawned, ball.gameObject);
-
-            Debug.Log($"[Ball] Spawned — {_activeBallCount} active");
+            GameEvents.Raise(GameEvents.OnTurnStart);
+            Debug.Log($"[Ball] Firing {_ballCount} balls");
         }
 
-        public void DespawnBall(BallController ball)
+        public void SetLaunchPosition(Vector2 pos)
         {
-            if (ball == null) return;
-
-            ball.ResetBall();
-            _pool.Release(ball);
-            _activeBallCount = Mathf.Max(0, _activeBallCount - 1);
+            _launchPosition = new Vector2(pos.x, _floorY);
         }
 
-        public void DespawnAll()
+        public void AddBalls(int count)
         {
-            var balls = GetComponentsInChildren<BallController>(true);
-            foreach (var ball in balls)
-            {
-                if (ball.gameObject.activeSelf)
-                    DespawnBall(ball);
-            }
+            _ballCount += count;
+            GameEvents.Raise(GameEvents.OnBallCountChanged, _ballCount);
+            Debug.Log($"[Ball] Ball count: {_ballCount}");
+        }
+
+        public void SetBallCount(int count)
+        {
+            _ballCount = Mathf.Max(1, count);
+            GameEvents.Raise(GameEvents.OnBallCountChanged, _ballCount);
         }
 
         // 6. Private methods
@@ -92,6 +97,9 @@ namespace BounceReaper
             Debug.Assert(_defaultStats != null, "[Ball] DefaultStats SO not assigned");
             Debug.Assert(_ballPrefab != null, "[Ball] BallPrefab not assigned");
             Debug.Assert(_gameConfig != null, "[Ball] GameConfig not assigned");
+
+            _waitFireDelay = new WaitForSeconds(_fireDelay);
+            _launchPosition = new Vector2(0, _floorY);
 
             _pool = new ObjectPool<BallController>(
                 createFunc: CreateBall,
@@ -104,17 +112,61 @@ namespace BounceReaper
             );
 
             // Warm-up
-            var warmupBalls = new BallController[_poolWarmup];
+            var warmup = new BallController[_poolWarmup];
             for (int i = 0; i < _poolWarmup; i++)
-                warmupBalls[i] = _pool.Get();
+                warmup[i] = _pool.Get();
             for (int i = 0; i < _poolWarmup; i++)
-                _pool.Release(warmupBalls[i]);
+                _pool.Release(warmup[i]);
 
             _initialized = true;
-            Debug.Log($"[Ball] Initialized — pool warmed up with {_poolWarmup} balls");
+            Debug.Log($"[Ball] Initialized — {_ballCount} balls, pool warmed up");
+        }
 
-            for (int i = 0; i < _startingBalls; i++)
-                SpawnBall();
+        private IEnumerator FireVolleyCoroutine(Vector2 direction)
+        {
+            _ballsInFlight = _ballCount;
+
+            for (int i = 0; i < _ballCount; i++)
+            {
+                var ball = _pool.Get();
+                ball.transform.position = new Vector3(_launchPosition.x, _launchPosition.y, 0);
+                ball.gameObject.SetActive(true);
+                ball.Initialize(_defaultStats);
+                ball.SetFloorY(_floorY);
+                ball.Launch(direction);
+
+                if (i < _ballCount - 1)
+                    yield return _waitFireDelay;
+            }
+        }
+
+        private void HandleBallReturned(Vector2 returnPos)
+        {
+            _ballsReturned++;
+
+            // First ball to return sets the next launch position
+            if (!_firstBallReturned)
+            {
+                _firstBallReturned = true;
+                _nextLaunchPosition = new Vector2(
+                    Mathf.Clamp(returnPos.x, -2.5f, 2.5f),
+                    _floorY
+                );
+            }
+
+            if (_ballsReturned >= _ballsInFlight)
+            {
+                AllBallsReturned();
+            }
+        }
+
+        private void AllBallsReturned()
+        {
+            _ballsInFlight = 0;
+            _launchPosition = _nextLaunchPosition;
+
+            Debug.Log($"[Ball] All balls returned. Next launch at x={_launchPosition.x:F1}");
+            GameEvents.Raise(GameEvents.OnAllBallsReturned);
         }
 
         private BallController CreateBall()
@@ -133,14 +185,6 @@ namespace BounceReaper
         {
             if (ball != null)
                 Destroy(ball.gameObject);
-        }
-
-        private void HandleGameStateChanged(GameState state)
-        {
-            if (state == GameState.Defeat || state == GameState.Victory || state == GameState.MainMenu)
-            {
-                DespawnAll();
-            }
         }
     }
 }

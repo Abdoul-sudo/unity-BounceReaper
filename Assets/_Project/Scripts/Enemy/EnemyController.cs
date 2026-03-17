@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 namespace BounceReaper
 {
@@ -10,16 +11,10 @@ namespace BounceReaper
         [Header("Config")]
         [SerializeField] private EnemyStats _stats;
 
-        [Header("Arena Bounds")]
-        [SerializeField] private float _arenaHalfWidth = 2.75f;
-        [SerializeField] private float _arenaHalfHeight = 4.75f;
-
         // 2. Private fields
         private EnemyHealth _health;
-        private Rigidbody2D _rb;
         private SpriteRenderer _spriteRenderer;
-        private Vector2 _moveDirection;
-        private float _directionTimer;
+        private TextMeshPro _hpText;
         private bool _initialized;
 
         // 3. Properties
@@ -30,103 +25,44 @@ namespace BounceReaper
         private void Awake()
         {
             _health = GetComponent<EnemyHealth>();
-            _rb = GetComponent<Rigidbody2D>();
             _spriteRenderer = GetComponent<SpriteRenderer>();
+            _hpText = GetComponentInChildren<TextMeshPro>();
 
-            Debug.Assert(_health != null, $"[Enemy] Missing EnemyHealth on {gameObject.name}");
-        }
-
-        private void Update()
-        {
-            if (!_initialized || _health.IsDead) return;
-
-            if (_stats.UsePhysicsMovement) return;
-
-            _directionTimer -= Time.deltaTime;
-            if (_directionTimer <= 0f)
-            {
-                PickRandomDirection();
-                _directionTimer = _stats.DirectionInterval;
-            }
-
-            transform.Translate(_moveDirection * (_stats.MoveSpeed * Time.deltaTime));
-            ClampToArena();
+            Debug.Assert(_health != null, $"[Block] Missing EnemyHealth on {gameObject.name}");
         }
 
         // 5. Public API
-        public void Initialize(EnemyStats stats)
+        public void Initialize(int hp, Color color, Sprite sprite = null)
         {
-            Debug.Assert(stats != null, "[Enemy] EnemyStats is null in Initialize");
-            _stats = stats;
-            _health.Initialize(stats);
+            _health.Initialize(hp);
 
-            // Visuals
-            transform.localScale = Vector3.one * stats.Size;
             if (_spriteRenderer != null)
             {
-                if (stats.EnemySprite != null)
-                    _spriteRenderer.sprite = stats.EnemySprite;
-                _spriteRenderer.color = stats.EnemyColor;
+                if (sprite != null)
+                    _spriteRenderer.sprite = sprite;
+                _spriteRenderer.color = color;
                 _spriteRenderer.sortingOrder = GameConstants.SortOrderEnemies;
             }
 
-            // Movement
-            if (stats.UsePhysicsMovement && _rb != null)
-            {
-                _rb.bodyType = RigidbodyType2D.Dynamic;
-                _rb.gravityScale = 0f;
-                _rb.linearDamping = 0f;
-                _rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-                _rb.freezeRotation = true;
-
-                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-                _rb.linearVelocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * stats.MoveSpeed;
-            }
-            else if (_rb != null)
-            {
-                _rb.bodyType = RigidbodyType2D.Kinematic;
-                _rb.linearVelocity = Vector2.zero;
-            }
-
-            PickRandomDirection();
-            _directionTimer = stats.DirectionInterval;
+            UpdateHPDisplay();
             _initialized = true;
         }
 
-        public void ResetEnemy()
+        public void UpdateHPDisplay()
+        {
+            if (_hpText != null)
+            {
+                _hpText.text = _health.CurrentHP.ToString();
+                _hpText.sortingOrder = GameConstants.SortOrderDamageNumbers;
+            }
+        }
+
+        public void ResetBlock()
         {
             _initialized = false;
             _health.ResetHealth();
-
-            if (_rb != null)
-            {
-                _rb.linearVelocity = Vector2.zero;
-                _rb.angularVelocity = 0f;
-            }
-
-            transform.localScale = Vector3.one;
-        }
-
-        // 6. Private methods
-        private void PickRandomDirection()
-        {
-            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-            _moveDirection = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-        }
-
-        private void ClampToArena()
-        {
-            var pos = transform.position;
-            float padding = _stats != null ? _stats.Size * 0.5f : 0.25f;
-
-            bool clamped = false;
-
-            if (pos.x < -_arenaHalfWidth + padding) { pos.x = -_arenaHalfWidth + padding; _moveDirection.x = Mathf.Abs(_moveDirection.x); clamped = true; }
-            if (pos.x > _arenaHalfWidth - padding) { pos.x = _arenaHalfWidth - padding; _moveDirection.x = -Mathf.Abs(_moveDirection.x); clamped = true; }
-            if (pos.y < -_arenaHalfHeight + padding) { pos.y = -_arenaHalfHeight + padding; _moveDirection.y = Mathf.Abs(_moveDirection.y); clamped = true; }
-            if (pos.y > _arenaHalfHeight - padding) { pos.y = _arenaHalfHeight - padding; _moveDirection.y = -Mathf.Abs(_moveDirection.y); clamped = true; }
-
-            if (clamped) transform.position = pos;
+            if (_hpText != null)
+                _hpText.text = "";
         }
     }
 }
