@@ -129,6 +129,18 @@ namespace BounceReaper
 
             _initialized = true;
             Debug.Log($"[Ball] Initialized — {_ballCount} balls, pool warmed up");
+
+            // Show the ball at launch position at start
+            ShowBallAtLaunchPosition();
+        }
+
+        private void ShowBallAtLaunchPosition()
+        {
+            var ball = _pool.Get();
+            ball.transform.position = new Vector3(_launchPosition.x, _launchPosition.y, 0);
+            ball.gameObject.SetActive(true);
+            ball.ResetBall();
+            _returnedBalls.Add(ball);
         }
 
         private IEnumerator FireVolleyCoroutine(Vector2 direction)
