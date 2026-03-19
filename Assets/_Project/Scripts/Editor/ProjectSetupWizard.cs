@@ -161,6 +161,8 @@ namespace BounceReaper.Editor
             DestroyByType<GridManager>();
             DestroyByType<AimController>();
             DestroyByType<TurnManager>();
+            DestroyByType<CurrencyManager>();
+            DestroyByType<SaveManager>();
 
             // Arena (portrait, no bottom wall)
             var arena = new GameObject("Arena");
@@ -200,6 +202,14 @@ namespace BounceReaper.Editor
             var aimSo = new SerializedObject(aimCtrl);
             aimSo.FindProperty("_aimLine").objectReferenceValue = lr;
             aimSo.ApplyModifiedProperties();
+
+            // SaveManager
+            var saveGO = new GameObject("SaveManager");
+            saveGO.AddComponent<SaveManager>();
+
+            // CurrencyManager
+            var currGO = new GameObject("CurrencyManager");
+            currGO.AddComponent<CurrencyManager>();
 
             // TurnManager
             var tmGO = new GameObject("TurnManager");

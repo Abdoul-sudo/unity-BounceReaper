@@ -12,11 +12,13 @@ namespace BounceReaper
 
         // 2. Private fields
         private int _currentHP;
+        private int _shardReward;
         private bool _isDead;
         private EnemyController _controller;
 
         // 3. Properties
         public int CurrentHP => _currentHP;
+        public int ShardReward => _shardReward;
         public bool IsDead => _isDead;
 
         // 4. Lifecycle
@@ -31,9 +33,10 @@ namespace BounceReaper
         }
 
         // 5. Public API
-        public void Initialize(int maxHP)
+        public void Initialize(int maxHP, int shardReward = 0)
         {
             _currentHP = maxHP;
+            _shardReward = shardReward > 0 ? shardReward : maxHP;
             _isDead = false;
         }
 
@@ -74,6 +77,7 @@ namespace BounceReaper
         public void ResetHealth()
         {
             _currentHP = 0;
+            _shardReward = 0;
             _isDead = false;
             DOTween.Kill(transform);
         }
