@@ -213,7 +213,7 @@ namespace BounceReaper
             var pickup = _pool.Get();
             float x = _gridStartX + col * _cellSize;
             pickup.transform.position = new Vector3(x, y, 0);
-            pickup.transform.localScale = Vector3.one * (_cellSize * 0.6f);
+            pickup.transform.localScale = Vector3.one * (_cellSize * 0.5f);
             pickup.gameObject.SetActive(true);
 
             int enemyLayer = LayerMask.NameToLayer(GameConstants.LayerEnemy);
@@ -221,7 +221,25 @@ namespace BounceReaper
 
             // Tag as pickup via name so we can identify it
             pickup.gameObject.name = "Pickup_Ball";
-            pickup.Initialize(1, _pickupColor, _blockSprite);
+
+            // Initialize with 1 HP, green color, and "+1" as display text
+            pickup.Initialize(1, _pickupColor, null);
+            // Override the HP text to show "+1" instead of "1"
+            var hpText = pickup.GetComponentInChildren<TMPro.TextMeshPro>();
+            if (hpText != null)
+            {
+                hpText.text = "+1";
+                hpText.color = Color.white;
+                hpText.fontSize = 5;
+            }
+
+            // Make the sprite a circle shape for distinction
+            var sr = pickup.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.drawMode = SpriteDrawMode.Simple;
+                sr.color = _pickupColor;
+            }
 
             _activeBlocks.Add(pickup);
         }

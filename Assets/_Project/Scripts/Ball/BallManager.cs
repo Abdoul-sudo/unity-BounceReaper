@@ -164,28 +164,35 @@ namespace BounceReaper
 
         private void HandleBallReturned(Vector2 returnPos)
         {
-            // Find the ball that just returned (it's still active at floor position)
+            // Find the ball that just returned
             var balls = GetComponentsInChildren<BallController>(false);
             foreach (var b in balls)
             {
                 if (b.HasReturned && !_returnedBalls.Contains(b))
                 {
                     _returnedBalls.Add(b);
+
+                    // First ball stays visible, all others hide immediately
+                    if (!_firstBallReturned)
+                    {
+                        _firstBallReturned = true;
+                        _nextLaunchPosition = new Vector2(
+                            Mathf.Clamp(returnPos.x, -2.5f, 2.5f),
+                            _floorY
+                        );
+                        // Keep this ball visible at the landing spot
+                        b.transform.position = new Vector3(_nextLaunchPosition.x, _floorY, 0);
+                    }
+                    else
+                    {
+                        // Hide subsequent balls — only show one
+                        b.gameObject.SetActive(false);
+                    }
                     break;
                 }
             }
 
             _ballsReturned++;
-
-            // First ball to return sets the next launch position
-            if (!_firstBallReturned)
-            {
-                _firstBallReturned = true;
-                _nextLaunchPosition = new Vector2(
-                    Mathf.Clamp(returnPos.x, -2.5f, 2.5f),
-                    _floorY
-                );
-            }
 
             if (_ballsReturned >= _ballsInFlight)
             {

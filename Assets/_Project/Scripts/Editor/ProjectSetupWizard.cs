@@ -236,18 +236,43 @@ namespace BounceReaper.Editor
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = GameConstants.SortOrderUI;
-            canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            canvasGO.GetComponent<UnityEngine.UI.CanvasScaler>().referenceResolution = new Vector2(1080, 1920);
+            var scaler = canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080, 1920);
+            scaler.matchWidthOrHeight = 0.5f;
             canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
             var hud = canvasGO.AddComponent<HUDController>();
 
-            // Shards text (top right)
-            var shardsGO = CreateTMPText("ShardsText", canvasGO.transform, new Vector2(350, -60), "0", 36, TextAlignmentOptions.Right);
+            // Top bar background
+            var topBar = CreatePanel("TopBar", canvasGO.transform,
+                new Vector2(0, 1), new Vector2(1, 1), // anchor top
+                new Vector2(0, -80), new Vector2(0, 0), // offset
+                new Color(0.05f, 0.05f, 0.15f, 0.8f));
+
+            // Shards text (top left)
+            var shardsGO = CreateAnchoredTMP("ShardsText", topBar.transform,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), // anchor left-center
+                new Vector2(120, 0), new Vector2(200, 50),
+                "0", 32, TextAlignmentOptions.Left, new Color(1f, 0.85f, 0.2f));
+
+            // Shards icon label
+            CreateAnchoredTMP("ShardsIcon", topBar.transform,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                new Vector2(30, 0), new Vector2(50, 50),
+                "\u25C6", 28, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f)); // diamond symbol
+
             // Wave text (top center)
-            var waveGO = CreateTMPText("WaveText", canvasGO.transform, new Vector2(0, -60), "Wave 0", 32, TextAlignmentOptions.Center);
-            // Ball count (bottom center)
-            var ballGO = CreateTMPText("BallCountText", canvasGO.transform, new Vector2(0, 80), "x1", 28, TextAlignmentOptions.Center);
+            var waveGO = CreateAnchoredTMP("WaveText", topBar.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(200, 50),
+                "Wave 0", 28, TextAlignmentOptions.Center, Color.white);
+
+            // Ball count (bottom center, above launch area)
+            var ballGO = CreateAnchoredTMP("BallCountText", canvasGO.transform,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), // anchor bottom-center
+                new Vector2(40, 100), new Vector2(120, 50),
+                "x1", 24, TextAlignmentOptions.Left, new Color(0.3f, 0.8f, 1f));
 
             // Game Over Panel
             var goPanelGO = new GameObject("GameOverPanel");
@@ -257,22 +282,33 @@ namespace BounceReaper.Editor
             goRect.anchorMax = Vector2.one;
             goRect.sizeDelta = Vector2.zero;
             var goImg = goPanelGO.AddComponent<UnityEngine.UI.Image>();
-            goImg.color = new Color(0, 0, 0, 0.7f);
+            goImg.color = new Color(0.02f, 0.02f, 0.08f, 0.85f);
 
-            var goTitleGO = CreateTMPText("Title", goPanelGO.transform, new Vector2(0, 200), "GAME OVER", 60, TextAlignmentOptions.Center);
-            var goScoreGO = CreateTMPText("Score", goPanelGO.transform, new Vector2(0, 0), "Wave 0\n0 Shards", 36, TextAlignmentOptions.Center);
+            CreateAnchoredTMP("Title", goPanelGO.transform,
+                new Vector2(0.5f, 0.65f), new Vector2(0.5f, 0.65f),
+                Vector2.zero, new Vector2(600, 80),
+                "GAME OVER", 56, TextAlignmentOptions.Center, new Color(1f, 0.3f, 0.3f));
+
+            var goScoreGO = CreateAnchoredTMP("Score", goPanelGO.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(500, 120),
+                "Wave 0\n0 Shards", 32, TextAlignmentOptions.Center, Color.white);
 
             // Restart button
             var btnGO = new GameObject("RestartButton");
             btnGO.transform.SetParent(goPanelGO.transform, false);
             var btnRect = btnGO.AddComponent<RectTransform>();
-            btnRect.anchoredPosition = new Vector2(0, -200);
-            btnRect.sizeDelta = new Vector2(300, 80);
+            btnRect.anchorMin = new Vector2(0.5f, 0.3f);
+            btnRect.anchorMax = new Vector2(0.5f, 0.3f);
+            btnRect.anchoredPosition = Vector2.zero;
+            btnRect.sizeDelta = new Vector2(350, 90);
             var btnImg = btnGO.AddComponent<UnityEngine.UI.Image>();
             btnImg.color = new Color(0.2f, 0.6f, 1f);
             var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
-            var btnText = CreateTMPText("Text", btnGO.transform, Vector2.zero, "RESTART", 32, TextAlignmentOptions.Center);
-            btnText.GetComponent<TextMeshProUGUI>().color = Color.white;
+            CreateAnchoredTMP("Text", btnGO.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(300, 80),
+                "RESTART", 36, TextAlignmentOptions.Center, Color.white);
 
             goPanelGO.SetActive(false);
 
@@ -286,7 +322,6 @@ namespace BounceReaper.Editor
             hudSo.ApplyModifiedProperties();
 
             // Wire restart button
-            var clickEvent = new UnityEngine.Events.UnityEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, hud.OnRestartButton);
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -301,18 +336,37 @@ namespace BounceReaper.Editor
 
         // --- Helpers ---
 
-        private static GameObject CreateTMPText(string name, Transform parent, Vector2 pos, string text, float fontSize, TextAlignmentOptions align)
+        private static GameObject CreateAnchoredTMP(string name, Transform parent,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPos, Vector2 sizeDelta,
+            string text, float fontSize, TextAlignmentOptions align, Color color)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
             var rect = go.AddComponent<RectTransform>();
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = new Vector2(500, 60);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.anchoredPosition = anchoredPos;
+            rect.sizeDelta = sizeDelta;
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.alignment = align;
-            tmp.color = Color.white;
+            tmp.color = color;
+            return go;
+        }
+
+        private static GameObject CreatePanel(string name, Transform parent,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax, Color color)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+            var img = go.AddComponent<UnityEngine.UI.Image>();
+            img.color = color;
             return go;
         }
 
