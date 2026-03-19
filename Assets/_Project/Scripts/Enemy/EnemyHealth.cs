@@ -71,6 +71,9 @@ namespace BounceReaper
         private void Die()
         {
             _isDead = true;
+            // Award currency before the event (GridManager may reset reward in its handler)
+            if (CurrencyManager.IsAvailable && _shardReward > 0)
+                CurrencyManager.Instance.AddShards(_shardReward);
             GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
         }
 

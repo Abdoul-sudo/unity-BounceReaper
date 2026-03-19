@@ -22,6 +22,7 @@ namespace BounceReaper
 
         // 2. Private fields
         private ObjectPool<BallController> _pool;
+        private System.Collections.Generic.List<BallController> _returnedBalls = new(16);
         private int _ballCount = 1;
         private int _ballsInFlight;
         private int _ballsReturned;
@@ -66,6 +67,9 @@ namespace BounceReaper
                 return;
             }
             if (_ballsInFlight > 0) return;
+
+            // Collect returned balls from previous turn
+            CollectReturnedBalls();
 
             _ballsReturned = 0;
             _firstBallReturned = false;
@@ -130,6 +134,7 @@ namespace BounceReaper
         private IEnumerator FireVolleyCoroutine(Vector2 direction)
         {
             _ballsInFlight = _ballCount;
+            _returnedBalls.Clear();
 
             for (int i = 0; i < _ballCount; i++)
             {
@@ -147,6 +152,17 @@ namespace BounceReaper
 
         private void HandleBallReturned(Vector2 returnPos)
         {
+            // Find the ball that just returned (it's still active at floor position)
+            var balls = GetComponentsInChildren<BallController>(false);
+            foreach (var b in balls)
+            {
+                if (b.HasReturned && !_returnedBalls.Contains(b))
+                {
+                    _returnedBalls.Add(b);
+                    break;
+                }
+            }
+
             _ballsReturned++;
 
             // First ball to return sets the next launch position
@@ -190,6 +206,19 @@ namespace BounceReaper
         {
             if (ball != null)
                 Destroy(ball.gameObject);
+        }
+
+        private void CollectReturnedBalls()
+        {
+            foreach (var ball in _returnedBalls)
+            {
+                if (ball != null && ball.gameObject.activeSelf)
+                {
+                    ball.ResetBall();
+                    _pool.Release(ball);
+                }
+            }
+            _returnedBalls.Clear();
         }
     }
 }

@@ -23,13 +23,11 @@ namespace BounceReaper
 
         private void OnEnable()
         {
-            GameEvents.OnBlockDestroyed += HandleBlockDestroyed;
             GameEvents.OnAllBallsReturned += HandleTurnEnd;
         }
 
         private void OnDisable()
         {
-            GameEvents.OnBlockDestroyed -= HandleBlockDestroyed;
             GameEvents.OnAllBallsReturned -= HandleTurnEnd;
         }
 
@@ -38,6 +36,7 @@ namespace BounceReaper
         {
             if (amount <= 0) return;
             _shards += amount;
+            _shardsThisTurn += amount;
             GameEvents.Raise(GameEvents.OnCurrencyChanged, CurrencyType.Shards, _shards);
         }
 
@@ -55,16 +54,6 @@ namespace BounceReaper
         }
 
         // 6. Private methods
-        private void HandleBlockDestroyed(GameObject blockGO)
-        {
-            var health = blockGO.GetComponent<EnemyHealth>();
-            if (health == null) return;
-
-            int reward = health.ShardReward;
-            AddShards(reward);
-            _shardsThisTurn += reward;
-        }
-
         private void HandleTurnEnd()
         {
             if (_shardsThisTurn > 0)

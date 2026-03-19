@@ -101,7 +101,7 @@ namespace BounceReaper
             Vector2 returnPos = new Vector2(transform.position.x, _floorY);
             _rb.linearVelocity = Vector2.zero;
             transform.position = new Vector3(returnPos.x, _floorY, 0);
-            gameObject.SetActive(false);
+            // Stay visible at floor position — BallManager hides when next turn starts
 
             GameEvents.Raise(GameEvents.OnBallReturned, returnPos);
         }
