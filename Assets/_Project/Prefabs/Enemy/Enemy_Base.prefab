@@ -185,5 +185,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BounceReaper.EnemyController
   _stats: {fileID: 0}
-  _arenaHalfWidth: 2.75
-  _arenaHalfHeight: 4.75
