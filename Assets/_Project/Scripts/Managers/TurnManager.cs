@@ -12,10 +12,12 @@ namespace BounceReaper
         private TurnPhase _currentPhase = TurnPhase.None;
         private int _turnNumber;
         private bool _initialized;
+        private bool _gameOver;
 
         // 3. Properties
         public TurnPhase CurrentPhase => _currentPhase;
         public int TurnNumber => _turnNumber;
+        public bool IsGameOver => _gameOver;
 
         // 4. Lifecycle
         protected override void Awake()
@@ -26,6 +28,7 @@ namespace BounceReaper
         private void Start()
         {
             _initialized = true;
+            _gameOver = false;
             StartAimingPhase();
         }
 
@@ -44,7 +47,7 @@ namespace BounceReaper
         // 5. Public API
         public void StartAimingPhase()
         {
-            if (!_initialized) return;
+            if (!_initialized || _gameOver) return;
 
             _currentPhase = TurnPhase.Aiming;
 
@@ -57,6 +60,8 @@ namespace BounceReaper
         // 6. Private methods
         private void HandleAllBallsReturned()
         {
+            if (_gameOver) return;
+
             _currentPhase = TurnPhase.EnemyPhase;
             _turnNumber++;
 
@@ -66,18 +71,24 @@ namespace BounceReaper
             if (GridManager.IsAvailable)
                 GridManager.Instance.SpawnNewRow();
 
+            // Check if game over was triggered by the new row
+            if (_gameOver) return;
+
             // Back to aiming
             StartAimingPhase();
         }
 
         private void HandleGameOver()
         {
+            if (_gameOver) return;
+
+            _gameOver = true;
             _currentPhase = TurnPhase.None;
 
             if (_aimController != null)
                 _aimController.DisableAiming();
 
-            Debug.Log("[Turn] GAME OVER — block reached bottom!");
+            Debug.Log($"[Turn] GAME OVER at turn {_turnNumber}!");
             GameEvents.Raise(GameEvents.OnGameStateChanged, GameState.GameOver);
         }
     }
