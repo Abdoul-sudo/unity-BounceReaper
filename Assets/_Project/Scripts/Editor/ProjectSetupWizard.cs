@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using TMPro;
 
 namespace BounceReaper.Editor
 {
@@ -229,6 +230,65 @@ namespace BounceReaper.Editor
 
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
 
+            // HUD Canvas
+            DestroyIfExists("HUD_Canvas");
+            var canvasGO = new GameObject("HUD_Canvas");
+            var canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = GameConstants.SortOrderUI;
+            canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasGO.GetComponent<UnityEngine.UI.CanvasScaler>().referenceResolution = new Vector2(1080, 1920);
+            canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            var hud = canvasGO.AddComponent<HUDController>();
+
+            // Shards text (top right)
+            var shardsGO = CreateTMPText("ShardsText", canvasGO.transform, new Vector2(350, -60), "0", 36, TextAlignmentOptions.Right);
+            // Wave text (top center)
+            var waveGO = CreateTMPText("WaveText", canvasGO.transform, new Vector2(0, -60), "Wave 0", 32, TextAlignmentOptions.Center);
+            // Ball count (bottom center)
+            var ballGO = CreateTMPText("BallCountText", canvasGO.transform, new Vector2(0, 80), "x1", 28, TextAlignmentOptions.Center);
+
+            // Game Over Panel
+            var goPanelGO = new GameObject("GameOverPanel");
+            goPanelGO.transform.SetParent(canvasGO.transform, false);
+            var goRect = goPanelGO.AddComponent<RectTransform>();
+            goRect.anchorMin = Vector2.zero;
+            goRect.anchorMax = Vector2.one;
+            goRect.sizeDelta = Vector2.zero;
+            var goImg = goPanelGO.AddComponent<UnityEngine.UI.Image>();
+            goImg.color = new Color(0, 0, 0, 0.7f);
+
+            var goTitleGO = CreateTMPText("Title", goPanelGO.transform, new Vector2(0, 200), "GAME OVER", 60, TextAlignmentOptions.Center);
+            var goScoreGO = CreateTMPText("Score", goPanelGO.transform, new Vector2(0, 0), "Wave 0\n0 Shards", 36, TextAlignmentOptions.Center);
+
+            // Restart button
+            var btnGO = new GameObject("RestartButton");
+            btnGO.transform.SetParent(goPanelGO.transform, false);
+            var btnRect = btnGO.AddComponent<RectTransform>();
+            btnRect.anchoredPosition = new Vector2(0, -200);
+            btnRect.sizeDelta = new Vector2(300, 80);
+            var btnImg = btnGO.AddComponent<UnityEngine.UI.Image>();
+            btnImg.color = new Color(0.2f, 0.6f, 1f);
+            var btn = btnGO.AddComponent<UnityEngine.UI.Button>();
+            var btnText = CreateTMPText("Text", btnGO.transform, Vector2.zero, "RESTART", 32, TextAlignmentOptions.Center);
+            btnText.GetComponent<TextMeshProUGUI>().color = Color.white;
+
+            goPanelGO.SetActive(false);
+
+            // Wire HUD references
+            var hudSo = new SerializedObject(hud);
+            hudSo.FindProperty("_shardsText").objectReferenceValue = shardsGO.GetComponent<TextMeshProUGUI>();
+            hudSo.FindProperty("_waveText").objectReferenceValue = waveGO.GetComponent<TextMeshProUGUI>();
+            hudSo.FindProperty("_ballCountText").objectReferenceValue = ballGO.GetComponent<TextMeshProUGUI>();
+            hudSo.FindProperty("_gameOverPanel").objectReferenceValue = goPanelGO;
+            hudSo.FindProperty("_gameOverScoreText").objectReferenceValue = goScoreGO.GetComponent<TextMeshProUGUI>();
+            hudSo.ApplyModifiedProperties();
+
+            // Wire restart button
+            var clickEvent = new UnityEngine.Events.UnityEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, hud.OnRestartButton);
+
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
@@ -240,6 +300,21 @@ namespace BounceReaper.Editor
         }
 
         // --- Helpers ---
+
+        private static GameObject CreateTMPText(string name, Transform parent, Vector2 pos, string text, float fontSize, TextAlignmentOptions align)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = new Vector2(500, 60);
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.alignment = align;
+            tmp.color = Color.white;
+            return go;
+        }
 
         private static void CreateWall(string name, Transform parent, Vector3 pos, Vector2 size)
         {

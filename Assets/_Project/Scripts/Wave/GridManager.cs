@@ -17,6 +17,10 @@ namespace BounceReaper
         [SerializeField] private int _baseHP = 1;
         [SerializeField] private float _hpScaling = 1.5f;
 
+        [Header("Power-ups")]
+        [SerializeField] [Range(0, 3)] private int _ballPickupsPerRow = 1;
+        [SerializeField] private Color _pickupColor = new Color(0.2f, 1f, 0.4f);
+
         [Header("Visuals")]
         [SerializeField] private Sprite _blockSprite;
 
@@ -104,6 +108,25 @@ namespace BounceReaper
                 SpawnBlock(col, _topY, blockHP);
             }
 
+            // Spawn +1 ball pickups in random empty columns
+            var usedCols = new System.Collections.Generic.HashSet<int>();
+            foreach (var b in _activeBlocks)
+            {
+                if (Mathf.Approximately(b.transform.position.y, _topY))
+                    usedCols.Add(Mathf.RoundToInt((b.transform.position.x - _gridStartX) / _cellSize));
+            }
+            int pickupsSpawned = 0;
+            for (int col = 0; col < _columns && pickupsSpawned < _ballPickupsPerRow; col++)
+            {
+                int randomCol = Random.Range(0, _columns);
+                if (!usedCols.Contains(randomCol))
+                {
+                    SpawnPickup(randomCol, _topY);
+                    usedCols.Add(randomCol);
+                    pickupsSpawned++;
+                }
+            }
+
             Debug.Log($"[Grid] Wave {_currentWave} — {_activeBlocks.Count} blocks, HP base: {hpForWave}");
             GameEvents.Raise(GameEvents.OnWaveComplete, _currentWave);
         }
@@ -185,13 +208,39 @@ namespace BounceReaper
             return HPColors[index];
         }
 
+        private void SpawnPickup(int col, float y)
+        {
+            var pickup = _pool.Get();
+            float x = _gridStartX + col * _cellSize;
+            pickup.transform.position = new Vector3(x, y, 0);
+            pickup.transform.localScale = Vector3.one * (_cellSize * 0.6f);
+            pickup.gameObject.SetActive(true);
+
+            int enemyLayer = LayerMask.NameToLayer(GameConstants.LayerEnemy);
+            if (enemyLayer >= 0) pickup.gameObject.layer = enemyLayer;
+
+            // Tag as pickup via name so we can identify it
+            pickup.gameObject.name = "Pickup_Ball";
+            pickup.Initialize(1, _pickupColor, _blockSprite);
+
+            _activeBlocks.Add(pickup);
+        }
+
         private void HandleBlockDestroyed(GameObject blockGO)
         {
             var block = blockGO.GetComponent<EnemyController>();
             if (block == null) return;
 
+            // Check if it's a +1 ball pickup
+            if (blockGO.name == "Pickup_Ball" && BallManager.IsAvailable)
+            {
+                BallManager.Instance.AddBalls(1);
+                Debug.Log("[Grid] +1 ball pickup collected!");
+            }
+
             _activeBlocks.Remove(block);
             block.ResetBlock();
+            blockGO.name = "Block_Base"; // reset name
             _pool.Release(block);
         }
 
