@@ -171,28 +171,19 @@ namespace BounceReaper
                 if (b.HasReturned && !_returnedBalls.Contains(b))
                 {
                     _returnedBalls.Add(b);
-
-                    // First ball stays visible, all others hide immediately
-                    if (!_firstBallReturned)
-                    {
-                        _firstBallReturned = true;
-                        _nextLaunchPosition = new Vector2(
-                            Mathf.Clamp(returnPos.x, -2.5f, 2.5f),
-                            _floorY
-                        );
-                        // Keep this ball visible at the landing spot
-                        b.transform.position = new Vector3(_nextLaunchPosition.x, _floorY, 0);
-                    }
-                    else
-                    {
-                        // Hide subsequent balls — only show one
-                        b.gameObject.SetActive(false);
-                    }
+                    // Hide every ball as it returns
+                    b.gameObject.SetActive(false);
                     break;
                 }
             }
 
             _ballsReturned++;
+
+            // Always update position to the latest ball that returned
+            _nextLaunchPosition = new Vector2(
+                Mathf.Clamp(returnPos.x, -2.5f, 2.5f),
+                _floorY
+            );
 
             if (_ballsReturned >= _ballsInFlight)
             {
@@ -204,6 +195,9 @@ namespace BounceReaper
         {
             _ballsInFlight = 0;
             _launchPosition = _nextLaunchPosition;
+
+            // Show one ball at the final landing position
+            ShowBallAtLaunchPosition();
 
             Debug.Log($"[Ball] All balls returned. Next launch at x={_launchPosition.x:F1}");
             GameEvents.Raise(GameEvents.OnAllBallsReturned);
