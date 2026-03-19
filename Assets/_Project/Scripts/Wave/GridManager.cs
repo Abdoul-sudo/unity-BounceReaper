@@ -108,22 +108,23 @@ namespace BounceReaper
                 SpawnBlock(col, _topY, blockHP);
             }
 
-            // Spawn +1 ball pickups in random empty columns
-            var usedCols = new System.Collections.Generic.HashSet<int>();
-            foreach (var b in _activeBlocks)
+            // Spawn +1 ball pickups (50% chance per row, in empty column)
+            if (Random.value < 0.5f)
             {
-                if (Mathf.Approximately(b.transform.position.y, _topY))
-                    usedCols.Add(Mathf.RoundToInt((b.transform.position.x - _gridStartX) / _cellSize));
-            }
-            int pickupsSpawned = 0;
-            for (int col = 0; col < _columns && pickupsSpawned < _ballPickupsPerRow; col++)
-            {
-                int randomCol = Random.Range(0, _columns);
-                if (!usedCols.Contains(randomCol))
+                var usedCols = new System.Collections.Generic.HashSet<int>();
+                foreach (var b in _activeBlocks)
                 {
-                    SpawnPickup(randomCol, _topY);
-                    usedCols.Add(randomCol);
-                    pickupsSpawned++;
+                    if (Mathf.Approximately(b.transform.position.y, _topY))
+                        usedCols.Add(Mathf.RoundToInt((b.transform.position.x - _gridStartX) / _cellSize));
+                }
+                for (int attempt = 0; attempt < _columns; attempt++)
+                {
+                    int randomCol = Random.Range(0, _columns);
+                    if (!usedCols.Contains(randomCol))
+                    {
+                        SpawnPickup(randomCol, _topY);
+                        break;
+                    }
                 }
             }
 
@@ -213,33 +214,19 @@ namespace BounceReaper
             var pickup = _pool.Get();
             float x = _gridStartX + col * _cellSize;
             pickup.transform.position = new Vector3(x, y, 0);
-            pickup.transform.localScale = Vector3.one * (_cellSize * 0.5f);
+            pickup.transform.localScale = Vector3.one * (_cellSize * 0.85f);
             pickup.gameObject.SetActive(true);
 
             int enemyLayer = LayerMask.NameToLayer(GameConstants.LayerEnemy);
             if (enemyLayer >= 0) pickup.gameObject.layer = enemyLayer;
 
-            // Tag as pickup via name so we can identify it
             pickup.gameObject.name = "Pickup_Ball";
+            pickup.Initialize(1, _pickupColor, _blockSprite);
 
-            // Initialize with 1 HP, green color, and "+1" as display text
-            pickup.Initialize(1, _pickupColor, null);
-            // Override the HP text to show "+1" instead of "1"
+            // Override HP text to show "+1"
             var hpText = pickup.GetComponentInChildren<TMPro.TextMeshPro>();
             if (hpText != null)
-            {
                 hpText.text = "+1";
-                hpText.color = Color.white;
-                hpText.fontSize = 5;
-            }
-
-            // Make the sprite a circle shape for distinction
-            var sr = pickup.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.drawMode = SpriteDrawMode.Simple;
-                sr.color = _pickupColor;
-            }
 
             _activeBlocks.Add(pickup);
         }
