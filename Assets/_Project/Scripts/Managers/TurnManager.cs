@@ -7,6 +7,7 @@ namespace BounceReaper
         // 1. SerializeField
         [Header("References")]
         [SerializeField] private AimController _aimController;
+        [SerializeField] private UpgradePanel _upgradePanel;
 
         // 2. Private fields
         private TurnPhase _currentPhase = TurnPhase.None;
@@ -51,6 +52,9 @@ namespace BounceReaper
 
             _currentPhase = TurnPhase.Aiming;
 
+            if (_upgradePanel != null)
+                _upgradePanel.Hide();
+
             if (_aimController != null)
                 _aimController.EnableAiming();
 
@@ -71,11 +75,18 @@ namespace BounceReaper
             if (GridManager.IsAvailable)
                 GridManager.Instance.SpawnNewRow();
 
-            // Check if game over was triggered by the new row
             if (_gameOver) return;
 
-            // Back to aiming
-            StartAimingPhase();
+            // Show upgrade panel between turns
+            if (_upgradePanel != null)
+            {
+                _upgradePanel.Show();
+                // Player will click Skip or buy upgrades, then UpgradePanel calls StartAimingPhase()
+            }
+            else
+            {
+                StartAimingPhase();
+            }
         }
 
         private void HandleGameOver()
@@ -87,6 +98,8 @@ namespace BounceReaper
 
             if (_aimController != null)
                 _aimController.DisableAiming();
+            if (_upgradePanel != null)
+                _upgradePanel.Hide();
 
             Debug.Log($"[Turn] GAME OVER at turn {_turnNumber}!");
             GameEvents.Raise(GameEvents.OnGameStateChanged, GameState.GameOver);

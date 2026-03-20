@@ -66,6 +66,12 @@ namespace BounceReaper.Editor
                 AssetDatabase.CreateAsset(bs, $"{SOPath}/Balls/Ball_Basic.asset");
             }
 
+            // Upgrade SOs
+            EnsureDirectory($"{SOPath}/Upgrades");
+            CreateUpgradeSO("Upgrade_Damage", "Damage", 10, 1.5f, 20, 1f);
+            CreateUpgradeSO("Upgrade_Speed", "Speed", 15, 1.5f, 15, 0.5f);
+            CreateUpgradeSO("Upgrade_Balls", "Extra Balls", 25, 2f, 10, 1f);
+
             // PhysicsMaterial2D
             string matPath = $"{MaterialPath}/BallPhysics.physicsMaterial2D";
             PhysicsMaterial2D ballPhysMat;
@@ -163,7 +169,9 @@ namespace BounceReaper.Editor
             DestroyByType<AimController>();
             DestroyByType<TurnManager>();
             DestroyByType<CurrencyManager>();
+            DestroyByType<UpgradeManager>();
             DestroyByType<SaveManager>();
+            DestroyIfExists("UpgradePanel");
 
             // Arena (portrait, no bottom wall)
             var arena = new GameObject("Arena");
@@ -212,11 +220,21 @@ namespace BounceReaper.Editor
             var currGO = new GameObject("CurrencyManager");
             currGO.AddComponent<CurrencyManager>();
 
+            // UpgradeManager
+            var upGO = new GameObject("UpgradeManager");
+            var upMgr = upGO.AddComponent<UpgradeManager>();
+            var upSo = new SerializedObject(upMgr);
+            AssignAsset<UpgradeConfig>(upSo, "_damageUpgrade", $"{SOPath}/Upgrades/Upgrade_Damage.asset");
+            AssignAsset<UpgradeConfig>(upSo, "_speedUpgrade", $"{SOPath}/Upgrades/Upgrade_Speed.asset");
+            AssignAsset<UpgradeConfig>(upSo, "_extraBallsUpgrade", $"{SOPath}/Upgrades/Upgrade_Balls.asset");
+            upSo.ApplyModifiedProperties();
+
             // TurnManager
             var tmGO = new GameObject("TurnManager");
             var tm = tmGO.AddComponent<TurnManager>();
             var tmSo = new SerializedObject(tm);
             tmSo.FindProperty("_aimController").objectReferenceValue = aimCtrl;
+            tmSo.FindProperty("_upgradePanel").objectReferenceValue = upgPanel;
             tmSo.ApplyModifiedProperties();
 
             // Camera
@@ -312,6 +330,39 @@ namespace BounceReaper.Editor
 
             goPanelGO.SetActive(false);
 
+            // Upgrade Panel
+            var upgPanelGO = new GameObject("UpgradePanel");
+            upgPanelGO.transform.SetParent(canvasGO.transform, false);
+            var upgRect = upgPanelGO.AddComponent<RectTransform>();
+            upgRect.anchorMin = new Vector2(0, 0);
+            upgRect.anchorMax = new Vector2(1, 0.25f);
+            upgRect.offsetMin = Vector2.zero;
+            upgRect.offsetMax = Vector2.zero;
+            var upgImg = upgPanelGO.AddComponent<UnityEngine.UI.Image>();
+            upgImg.color = new Color(0.05f, 0.05f, 0.15f, 0.9f);
+
+            var upgPanel = upgPanelGO.AddComponent<UpgradePanel>();
+
+            // Upgrade buttons
+            var dmgBtn = CreateUpgradeButton("DamageBtn", upgPanelGO.transform, new Vector2(-200, 60), "Damage Lv.0\n10 shards", new Color(1f, 0.4f, 0.3f));
+            var spdBtn = CreateUpgradeButton("SpeedBtn", upgPanelGO.transform, new Vector2(0, 60), "Speed Lv.0\n15 shards", new Color(0.3f, 0.7f, 1f));
+            var ballBtn = CreateUpgradeButton("BallsBtn", upgPanelGO.transform, new Vector2(200, 60), "Balls Lv.0\n25 shards", new Color(0.3f, 1f, 0.5f));
+            var skipBtn = CreateUpgradeButton("SkipBtn", upgPanelGO.transform, new Vector2(0, -30), "SKIP >>", new Color(0.3f, 0.3f, 0.4f));
+            skipBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 50);
+
+            var upgPanelSo = new SerializedObject(upgPanel);
+            upgPanelSo.FindProperty("_panel").objectReferenceValue = upgPanelGO;
+            upgPanelSo.FindProperty("_damageButton").objectReferenceValue = dmgBtn.GetComponent<UnityEngine.UI.Button>();
+            upgPanelSo.FindProperty("_damageText").objectReferenceValue = dmgBtn.GetComponentInChildren<TextMeshProUGUI>();
+            upgPanelSo.FindProperty("_speedButton").objectReferenceValue = spdBtn.GetComponent<UnityEngine.UI.Button>();
+            upgPanelSo.FindProperty("_speedText").objectReferenceValue = spdBtn.GetComponentInChildren<TextMeshProUGUI>();
+            upgPanelSo.FindProperty("_ballsButton").objectReferenceValue = ballBtn.GetComponent<UnityEngine.UI.Button>();
+            upgPanelSo.FindProperty("_ballsText").objectReferenceValue = ballBtn.GetComponentInChildren<TextMeshProUGUI>();
+            upgPanelSo.FindProperty("_skipButton").objectReferenceValue = skipBtn.GetComponent<UnityEngine.UI.Button>();
+            upgPanelSo.ApplyModifiedProperties();
+
+            upgPanelGO.SetActive(false);
+
             // Wire HUD references
             var hudSo = new SerializedObject(hud);
             hudSo.FindProperty("_shardsText").objectReferenceValue = shardsGO.GetComponent<TextMeshProUGUI>();
@@ -367,6 +418,48 @@ namespace BounceReaper.Editor
             rect.offsetMax = offsetMax;
             var img = go.AddComponent<UnityEngine.UI.Image>();
             img.color = color;
+            return go;
+        }
+
+        private static void CreateUpgradeSO(string fileName, string displayName, int baseCost, float costScale, int maxLevel, float effectPerLevel)
+        {
+            string path = $"{SOPath}/Upgrades/{fileName}.asset";
+            if (AssetExists(path)) return;
+            var config = ScriptableObject.CreateInstance<UpgradeConfig>();
+            var so = new SerializedObject(config);
+            so.FindProperty("_upgradeId").stringValue = displayName.ToLower().Replace(" ", "_");
+            so.FindProperty("_displayName").stringValue = displayName;
+            so.FindProperty("_baseCost").intValue = baseCost;
+            so.FindProperty("_costScale").floatValue = costScale;
+            so.FindProperty("_maxLevel").intValue = maxLevel;
+            so.FindProperty("_effectPerLevel").floatValue = effectPerLevel;
+            so.ApplyModifiedProperties();
+            AssetDatabase.CreateAsset(config, path);
+        }
+
+        private static GameObject CreateUpgradeButton(string name, Transform parent, Vector2 pos, string text, Color color)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = new Vector2(180, 70);
+            var img = go.AddComponent<UnityEngine.UI.Image>();
+            img.color = color;
+            go.AddComponent<UnityEngine.UI.Button>();
+
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(go.transform, false);
+            var textRect = textGO.AddComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+            var tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = 16;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+
             return go;
         }
 

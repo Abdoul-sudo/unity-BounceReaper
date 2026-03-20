@@ -56,6 +56,8 @@ namespace BounceReaper
             if (enemyHealth == null || enemyHealth.IsDead) return;
 
             float damage = _stats.BaseDamage;
+            if (UpgradeManager.IsAvailable)
+                damage += UpgradeManager.Instance.GetDamageBonus();
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             enemyHealth.TakeDamage(damage, hitDirection);
         }
@@ -77,7 +79,10 @@ namespace BounceReaper
         public void Launch(Vector2 direction)
         {
             _returned = false;
-            _rb.linearVelocity = direction.normalized * _stats.BaseSpeed;
+            float speed = _stats.BaseSpeed;
+            if (UpgradeManager.IsAvailable)
+                speed += UpgradeManager.Instance.GetSpeedBonus();
+            _rb.linearVelocity = direction.normalized * speed;
         }
 
         public void SetFloorY(float y)
