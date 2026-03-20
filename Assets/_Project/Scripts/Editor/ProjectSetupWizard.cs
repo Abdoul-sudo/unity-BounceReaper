@@ -171,6 +171,7 @@ namespace BounceReaper.Editor
             DestroyByType<CurrencyManager>();
             DestroyByType<UpgradeManager>();
             DestroyByType<VFXManager>();
+            DestroyByType<AudioManager>();
             DestroyByType<SaveManager>();
             DestroyIfExists("UpgradePanel");
 
@@ -212,6 +213,19 @@ namespace BounceReaper.Editor
             var aimSo = new SerializedObject(aimCtrl);
             aimSo.FindProperty("_aimLine").objectReferenceValue = lr;
             aimSo.ApplyModifiedProperties();
+
+            // AudioManager
+            var audioGO = new GameObject("AudioManager");
+            var audioMgr = audioGO.AddComponent<AudioManager>();
+            string sfxPath = "Assets/Brackeys/2D Mega Pack/Sounds";
+            var audioSo = new SerializedObject(audioMgr);
+            AssignAsset<AudioClip>(audioSo, "_hitClip", $"{sfxPath}/Hit.wav");
+            AssignAsset<AudioClip>(audioSo, "_destroyClip", $"{sfxPath}/Explosion.wav");
+            AssignAsset<AudioClip>(audioSo, "_bonusClip", $"{sfxPath}/Bonus.wav");
+            AssignAsset<AudioClip>(audioSo, "_shotClip", $"{sfxPath}/Shot.wav");
+            AssignAsset<AudioClip>(audioSo, "_gameOverClip", $"{sfxPath}/GameOver.wav");
+            AssignAsset<AudioClip>(audioSo, "_upgradeClip", $"{sfxPath}/Click.wav");
+            audioSo.ApplyModifiedProperties();
 
             // SaveManager
             var saveGO = new GameObject("SaveManager");
