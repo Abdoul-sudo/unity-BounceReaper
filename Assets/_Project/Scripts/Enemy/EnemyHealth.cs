@@ -10,11 +10,17 @@ namespace BounceReaper
         [SerializeField] private float _knockbackStrength = 0.1f;
         [SerializeField] private float _knockbackDuration = 0.1f;
 
+        [Header("Death")]
+        [SerializeField] private float _deathDuration = 0.2f;
+
         // 2. Private fields
         private int _currentHP;
         private int _shardReward;
         private bool _isDead;
+        private bool _dying;
         private EnemyController _controller;
+        private SpriteRenderer _spriteRenderer;
+        private Color _originalColor;
 
         // 3. Properties
         public int CurrentHP => _currentHP;
@@ -25,11 +31,14 @@ namespace BounceReaper
         private void Awake()
         {
             _controller = GetComponent<EnemyController>();
+            _spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
         private void OnDisable()
         {
             DOTween.Kill(transform);
+            if (_spriteRenderer != null)
+                DOTween.Kill(_spriteRenderer);
         }
 
         // 5. Public API
@@ -38,17 +47,28 @@ namespace BounceReaper
             _currentHP = maxHP;
             _shardReward = shardReward > 0 ? shardReward : maxHP;
             _isDead = false;
+            _dying = false;
+            if (_spriteRenderer != null)
+                _originalColor = _spriteRenderer.color;
         }
 
         public void TakeDamage(float damage, Vector2 hitDirection)
         {
-            if (_isDead) return;
+            if (_isDead || _dying) return;
 
             _currentHP -= Mathf.RoundToInt(damage);
 
             GameEvents.Raise(GameEvents.OnBlockHit, gameObject, damage);
 
-            // Knockback via DOTween
+            // Hit flash: white → original color
+            if (_spriteRenderer != null)
+            {
+                DOTween.Kill(_spriteRenderer);
+                _spriteRenderer.color = Color.white;
+                _spriteRenderer.DOColor(_originalColor, 0.1f).SetUpdate(true);
+            }
+
+            // Knockback
             DOTween.Kill(transform);
             transform.DOPunchPosition(
                 (Vector3)hitDirection.normalized * _knockbackStrength,
@@ -71,10 +91,28 @@ namespace BounceReaper
         private void Die()
         {
             _isDead = true;
-            // Award currency before the event (GridManager may reset reward in its handler)
+            _dying = true;
+
+            // Award currency immediately
             if (CurrencyManager.IsAvailable && _shardReward > 0)
                 CurrencyManager.Instance.AddShards(_shardReward);
-            GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
+
+            // Death animation: scale up → shrink to 0 + fade
+            DOTween.Kill(transform);
+            if (_spriteRenderer != null)
+                DOTween.Kill(_spriteRenderer);
+
+            var seq = DOTween.Sequence();
+            seq.Append(transform.DOScale(transform.localScale * 1.2f, _deathDuration * 0.3f).SetEase(Ease.OutQuad));
+            seq.Append(transform.DOScale(Vector3.zero, _deathDuration * 0.7f).SetEase(Ease.InBack));
+            if (_spriteRenderer != null)
+                seq.Join(_spriteRenderer.DOFade(0f, _deathDuration * 0.7f));
+            seq.SetUpdate(true);
+            seq.OnComplete(() =>
+            {
+                _dying = false;
+                GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
+            });
         }
 
         public void ResetHealth()
@@ -82,7 +120,16 @@ namespace BounceReaper
             _currentHP = 0;
             _shardReward = 0;
             _isDead = false;
+            _dying = false;
             DOTween.Kill(transform);
+            if (_spriteRenderer != null)
+            {
+                DOTween.Kill(_spriteRenderer);
+                _spriteRenderer.color = Color.white;
+                var c = _spriteRenderer.color;
+                c.a = 1f;
+                _spriteRenderer.color = c;
+            }
         }
     }
 }

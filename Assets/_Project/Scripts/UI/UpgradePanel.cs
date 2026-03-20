@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -36,11 +37,31 @@ namespace BounceReaper
             if (_panel == null) return;
             _panel.SetActive(true);
             RefreshButtons();
+
+            // Slide in from bottom
+            var rect = _panel.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                var pos = rect.anchoredPosition;
+                rect.anchoredPosition = new Vector2(pos.x, -500f);
+                rect.DOAnchorPosY(pos.y, 0.3f).SetEase(Ease.OutBack).SetUpdate(true);
+            }
         }
 
         public void Hide()
         {
-            if (_panel != null) _panel.SetActive(false);
+            if (_panel == null) return;
+
+            var rect = _panel.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.DOAnchorPosY(-500f, 0.2f).SetEase(Ease.InBack).SetUpdate(true)
+                    .OnComplete(() => _panel.SetActive(false));
+            }
+            else
+            {
+                _panel.SetActive(false);
+            }
         }
 
         // 6. Private methods

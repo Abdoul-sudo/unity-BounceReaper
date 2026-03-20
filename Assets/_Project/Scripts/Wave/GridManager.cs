@@ -221,12 +221,7 @@ namespace BounceReaper
             if (enemyLayer >= 0) pickup.gameObject.layer = enemyLayer;
 
             pickup.gameObject.name = "Pickup_Ball";
-            pickup.Initialize(1, _pickupColor, _blockSprite);
-
-            // Override HP text to show "+1"
-            var hpText = pickup.GetComponentInChildren<TMPro.TextMeshPro>();
-            if (hpText != null)
-                hpText.text = "+1";
+            pickup.InitializeAsPickup(1, _pickupColor, _blockSprite);
 
             _activeBlocks.Add(pickup);
         }

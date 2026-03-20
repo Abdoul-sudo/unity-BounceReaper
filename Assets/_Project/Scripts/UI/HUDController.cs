@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -90,16 +91,37 @@ namespace BounceReaper
 
         private void ShowGameOver()
         {
-            if (_gameOverPanel != null)
-            {
-                _gameOverPanel.SetActive(true);
+            if (_gameOverPanel == null) return;
 
-                if (_gameOverScoreText != null)
-                {
-                    int wave = GridManager.IsAvailable ? GridManager.Instance.CurrentWave : 0;
-                    int shards = CurrencyManager.IsAvailable ? CurrencyManager.Instance.Shards : 0;
-                    _gameOverScoreText.text = $"Wave {wave}\n{shards} Shards";
-                }
+            _gameOverPanel.SetActive(true);
+
+            // Animate: fade in panel + scale punch title
+            var panelImg = _gameOverPanel.GetComponent<UnityEngine.UI.Image>();
+            if (panelImg != null)
+            {
+                var c = panelImg.color;
+                panelImg.color = new Color(c.r, c.g, c.b, 0);
+                panelImg.DOFade(c.a, 0.4f).SetUpdate(true);
+            }
+
+            // Scale in the title
+            var title = _gameOverPanel.transform.Find("Title");
+            if (title != null)
+            {
+                title.localScale = Vector3.zero;
+                title.DOScale(Vector3.one, 0.4f).SetEase(Ease.OutBack).SetUpdate(true)
+                    .OnComplete(() => title.DOShakePosition(0.3f, 5f).SetUpdate(true));
+            }
+
+            if (_gameOverScoreText != null)
+            {
+                int wave = GridManager.IsAvailable ? GridManager.Instance.CurrentWave : 0;
+                int shards = CurrencyManager.IsAvailable ? CurrencyManager.Instance.Shards : 0;
+                _gameOverScoreText.text = $"Wave {wave}\n{shards} Shards";
+
+                _gameOverScoreText.transform.localScale = Vector3.zero;
+                _gameOverScoreText.transform.DOScale(Vector3.one, 0.3f)
+                    .SetEase(Ease.OutBack).SetDelay(0.3f).SetUpdate(true);
             }
         }
     }

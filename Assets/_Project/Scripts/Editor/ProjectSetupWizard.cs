@@ -108,6 +108,17 @@ namespace BounceReaper.Editor
                 var col = ballGO.AddComponent<CircleCollider2D>();
                 col.sharedMaterial = ballPhysMat;
                 ballGO.AddComponent<BallController>();
+
+                // Trail
+                var trail = ballGO.AddComponent<TrailRenderer>();
+                trail.time = 0.3f;
+                trail.startWidth = 0.12f;
+                trail.endWidth = 0f;
+                trail.startColor = new Color(0.3f, 0.8f, 1f, 0.8f);
+                trail.endColor = new Color(0.3f, 0.8f, 1f, 0f);
+                trail.material = new Material(Shader.Find("Sprites/Default"));
+                trail.sortingOrder = GameConstants.SortOrderVFX;
+                trail.minVertexDistance = 0.05f;
                 ballGO.layer = 6;
 
                 PrefabUtility.SaveAsPrefabAsset(ballGO, ballPrefabPath);

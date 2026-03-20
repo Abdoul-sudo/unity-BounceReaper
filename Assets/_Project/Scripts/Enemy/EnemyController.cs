@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -16,6 +17,7 @@ namespace BounceReaper
         private SpriteRenderer _spriteRenderer;
         private TextMeshPro _hpText;
         private bool _initialized;
+        private Vector3 _targetScale;
 
         // 3. Properties
         public EnemyStats Stats => _stats;
@@ -31,6 +33,11 @@ namespace BounceReaper
             Debug.Assert(_health != null, $"[Block] Missing EnemyHealth on {gameObject.name}");
         }
 
+        private void OnDisable()
+        {
+            DOTween.Kill(transform);
+        }
+
         // 5. Public API
         public void Initialize(int hp, Color color, Sprite sprite = null)
         {
@@ -42,10 +49,39 @@ namespace BounceReaper
                     _spriteRenderer.sprite = sprite;
                 _spriteRenderer.color = color;
                 _spriteRenderer.sortingOrder = GameConstants.SortOrderEnemies;
+                // Reset alpha
+                var c = _spriteRenderer.color;
+                c.a = 1f;
+                _spriteRenderer.color = c;
             }
 
             UpdateHPDisplay();
             _initialized = true;
+
+            // Spawn pop-in animation
+            _targetScale = transform.localScale;
+            transform.localScale = Vector3.zero;
+            transform.DOScale(_targetScale, 0.2f).SetEase(Ease.OutBack).SetUpdate(true);
+        }
+
+        public void InitializeAsPickup(int hp, Color color, Sprite sprite)
+        {
+            Initialize(hp, color, sprite);
+
+            // Override HP text
+            if (_hpText != null)
+            {
+                _hpText.text = "+1";
+                _hpText.fontSize = 4;
+            }
+
+            // Pulse animation loop
+            DOTween.Kill(transform);
+            transform.localScale = _targetScale;
+            transform.DOScale(_targetScale * 1.12f, 0.5f)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetUpdate(true);
         }
 
         public void UpdateHPDisplay()
@@ -61,6 +97,8 @@ namespace BounceReaper
         {
             _initialized = false;
             _health.ResetHealth();
+            DOTween.Kill(transform);
+            transform.localScale = Vector3.one;
             if (_hpText != null)
                 _hpText.text = "";
         }
