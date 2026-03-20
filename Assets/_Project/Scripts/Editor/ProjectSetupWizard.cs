@@ -170,6 +170,7 @@ namespace BounceReaper.Editor
             DestroyByType<TurnManager>();
             DestroyByType<CurrencyManager>();
             DestroyByType<UpgradeManager>();
+            DestroyByType<VFXManager>();
             DestroyByType<SaveManager>();
             DestroyIfExists("UpgradePanel");
 
@@ -228,6 +229,28 @@ namespace BounceReaper.Editor
             AssignAsset<UpgradeConfig>(upSo, "_speedUpgrade", $"{SOPath}/Upgrades/Upgrade_Speed.asset");
             AssignAsset<UpgradeConfig>(upSo, "_extraBallsUpgrade", $"{SOPath}/Upgrades/Upgrade_Balls.asset");
             upSo.ApplyModifiedProperties();
+
+            // VFXManager + damage number prefab
+            EnsureDirectory($"{PrefabPath}/VFX");
+            string dmgPrefabPath = $"{PrefabPath}/VFX/DamageNumber.prefab";
+            if (!AssetExists(dmgPrefabPath))
+            {
+                var dmgGO = new GameObject("DamageNumber");
+                var tmp = dmgGO.AddComponent<TextMeshPro>();
+                tmp.fontSize = 5;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.color = Color.white;
+                tmp.sortingOrder = GameConstants.SortOrderDamageNumbers;
+                dmgGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
+                PrefabUtility.SaveAsPrefabAsset(dmgGO, dmgPrefabPath);
+                Object.DestroyImmediate(dmgGO);
+            }
+
+            var vfxGO = new GameObject("VFXManager");
+            var vfx = vfxGO.AddComponent<VFXManager>();
+            var vfxSo = new SerializedObject(vfx);
+            AssignAsset<TextMeshPro>(vfxSo, "_damageNumberPrefab", dmgPrefabPath);
+            vfxSo.ApplyModifiedProperties();
 
             // TurnManager
             var tmGO = new GameObject("TurnManager");
