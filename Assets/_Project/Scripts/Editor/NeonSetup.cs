@@ -30,21 +30,15 @@ namespace BounceReaper.Editor
             }
 
             // Add Bloom override
-            if (!volume.profile.Has<Bloom>())
+            Bloom bloom;
+            if (!volume.profile.TryGet(out bloom))
             {
-                var bloom = volume.profile.Add<Bloom>();
+                bloom = volume.profile.Add<Bloom>();
                 bloom.active = true;
-                bloom.threshold.Override(0.8f);
-                bloom.intensity.Override(2.5f);
-                bloom.scatter.Override(0.7f);
             }
-            else
-            {
-                var bloom = volume.profile.Get<Bloom>();
-                bloom.threshold.Override(0.8f);
-                bloom.intensity.Override(2.5f);
-                bloom.scatter.Override(0.7f);
-            }
+            bloom.threshold.Override(0.8f);
+            bloom.intensity.Override(2.5f);
+            bloom.scatter.Override(0.7f);
 
             // 2. Enable post-processing on camera
             var cam = Camera.main;

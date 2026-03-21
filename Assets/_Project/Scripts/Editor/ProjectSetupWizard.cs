@@ -283,7 +283,7 @@ namespace BounceReaper.Editor
             var tm = tmGO.AddComponent<TurnManager>();
             var tmSo = new SerializedObject(tm);
             tmSo.FindProperty("_aimController").objectReferenceValue = aimCtrl;
-            tmSo.FindProperty("_upgradePanel").objectReferenceValue = upgPanel;
+            // _upgradePanel and _mainMenu wired after HUD creation below
             tmSo.ApplyModifiedProperties();
 
             // Camera
@@ -458,10 +458,11 @@ namespace BounceReaper.Editor
             menuSo.FindProperty("_bestWaveText").objectReferenceValue = bestGO.GetComponent<TextMeshProUGUI>();
             menuSo.ApplyModifiedProperties();
 
-            // Wire MainMenu to TurnManager
-            tmSo = new SerializedObject(tm);
-            tmSo.FindProperty("_mainMenu").objectReferenceValue = menuCtrl;
-            tmSo.ApplyModifiedProperties();
+            // Wire TurnManager references (upgPanel + mainMenu now exist)
+            var tmSo2 = new SerializedObject(tm);
+            tmSo2.FindProperty("_upgradePanel").objectReferenceValue = upgPanel;
+            tmSo2.FindProperty("_mainMenu").objectReferenceValue = menuCtrl;
+            tmSo2.ApplyModifiedProperties();
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
