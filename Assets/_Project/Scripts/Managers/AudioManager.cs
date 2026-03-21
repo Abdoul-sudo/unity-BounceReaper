@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Pool;
+using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -20,8 +21,13 @@ namespace BounceReaper
         [SerializeField] [Range(0.02f, 0.2f)] private float _throttleTime = 0.05f;
         [SerializeField] [Range(1, 16)] private int _poolSize = 8;
 
+        [Header("Music")]
+        [SerializeField] private AudioClip _musicClip;
+        [SerializeField] [Range(0f, 1f)] private float _musicVolume = 0.25f;
+
         // 2. Private fields
         private ObjectPool<AudioSource> _pool;
+        private AudioSource _musicSource;
         private float _lastHitTime;
         private bool _initialized;
 
@@ -30,6 +36,7 @@ namespace BounceReaper
         {
             base.Awake();
             InitPool();
+            InitMusic();
         }
 
         private void OnEnable()
@@ -69,6 +76,19 @@ namespace BounceReaper
         }
 
         // 6. Private methods
+        private void InitMusic()
+        {
+            if (_musicClip == null) return;
+
+            _musicSource = gameObject.AddComponent<AudioSource>();
+            _musicSource.clip = _musicClip;
+            _musicSource.volume = _musicVolume;
+            _musicSource.loop = true;
+            _musicSource.playOnAwake = false;
+            _musicSource.Play();
+            Debug.Log("[Audio] Music started");
+        }
+
         private void InitPool()
         {
             _pool = new ObjectPool<AudioSource>(
@@ -116,7 +136,12 @@ namespace BounceReaper
         private void HandleGameStateChanged(GameState state)
         {
             if (state == GameState.GameOver)
+            {
                 PlaySFX(_gameOverClip);
+                // Fade out music
+                if (_musicSource != null)
+                    _musicSource.DOFade(0f, 0.5f).SetUpdate(true);
+            }
         }
 
         private void HandleUpgrade(string id)
