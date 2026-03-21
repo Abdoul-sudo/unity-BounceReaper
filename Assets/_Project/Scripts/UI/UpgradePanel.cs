@@ -42,9 +42,9 @@ namespace BounceReaper
             var rect = _panel.GetComponent<RectTransform>();
             if (rect != null)
             {
-                var pos = rect.anchoredPosition;
-                rect.anchoredPosition = new Vector2(pos.x, -500f);
-                rect.DOAnchorPosY(pos.y, 0.3f).SetEase(Ease.OutBack).SetUpdate(true);
+                DOTween.Kill(rect);
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, -500f);
+                rect.DOAnchorPosY(0f, 0.3f).SetEase(Ease.OutBack).SetUpdate(true);
             }
         }
 
@@ -55,6 +55,7 @@ namespace BounceReaper
             var rect = _panel.GetComponent<RectTransform>();
             if (rect != null)
             {
+                DOTween.Kill(rect);
                 rect.DOAnchorPosY(-500f, 0.2f).SetEase(Ease.InBack).SetUpdate(true)
                     .OnComplete(() => _panel.SetActive(false));
             }

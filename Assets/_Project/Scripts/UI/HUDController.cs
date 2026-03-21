@@ -20,9 +20,11 @@ namespace BounceReaper
             if (_gameOverPanel != null)
                 _gameOverPanel.SetActive(false);
 
-            UpdateShards(0);
+            int shards = CurrencyManager.IsAvailable ? CurrencyManager.Instance.Shards : 0;
+            int balls = BallManager.IsAvailable ? BallManager.Instance.BallCount : 1;
+            UpdateShards(shards);
             UpdateWave(0);
-            UpdateBallCount(1);
+            UpdateBallCount(balls);
         }
 
         private void OnEnable()

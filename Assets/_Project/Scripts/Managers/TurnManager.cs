@@ -101,13 +101,15 @@ namespace BounceReaper
             if (_gameOver) return;
 
             // Show upgrade panel between turns
-            if (_upgradePanel != null)
+            if (_upgradePanel != null && _upgradePanel.gameObject != null)
             {
                 _upgradePanel.Show();
+                Debug.Log("[Turn] Upgrade panel shown — waiting for player");
                 // Player will click Skip or buy upgrades, then UpgradePanel calls StartAimingPhase()
             }
             else
             {
+                Debug.Log("[Turn] No upgrade panel — going straight to aiming");
                 StartAimingPhase();
             }
         }
