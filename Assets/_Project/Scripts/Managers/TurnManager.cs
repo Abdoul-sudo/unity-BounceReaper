@@ -68,9 +68,6 @@ namespace BounceReaper
 
             _currentPhase = TurnPhase.Aiming;
 
-            if (_upgradePanel != null)
-                _upgradePanel.Hide();
-
             if (_aimController != null)
                 _aimController.EnableAiming();
 
@@ -98,14 +95,17 @@ namespace BounceReaper
                     SaveManager.Instance.Data.highestWave = _turnNumber;
             }
 
-            if (_gameOver) return;
+            if (_gameOver)
+            {
+                Debug.Log("[Turn] Game over detected after spawning new row");
+                return;
+            }
 
-            // Show upgrade panel between turns
-            if (_upgradePanel != null && _upgradePanel.gameObject != null)
+            // Show upgrade panel between turns OR go straight to aiming
+            if (_upgradePanel != null)
             {
                 _upgradePanel.Show();
                 Debug.Log("[Turn] Upgrade panel shown — waiting for player");
-                // Player will click Skip or buy upgrades, then UpgradePanel calls StartAimingPhase()
             }
             else
             {

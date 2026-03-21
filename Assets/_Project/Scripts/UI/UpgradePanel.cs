@@ -126,10 +126,31 @@ namespace BounceReaper
 
         private void OnSkipClick()
         {
-            Hide();
-            // Resume the game — TurnManager will detect panel closed
-            if (TurnManager.IsAvailable)
-                TurnManager.Instance.StartAimingPhase();
+            HideAndResume();
+        }
+
+        private void HideAndResume()
+        {
+            if (_panel == null) return;
+
+            var rect = _panel.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                DOTween.Kill(rect);
+                rect.DOAnchorPosY(-500f, 0.2f).SetEase(Ease.InBack).SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        _panel.SetActive(false);
+                        if (TurnManager.IsAvailable)
+                            TurnManager.Instance.StartAimingPhase();
+                    });
+            }
+            else
+            {
+                _panel.SetActive(false);
+                if (TurnManager.IsAvailable)
+                    TurnManager.Instance.StartAimingPhase();
+            }
         }
     }
 }
