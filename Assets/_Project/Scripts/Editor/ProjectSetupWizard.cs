@@ -185,6 +185,7 @@ namespace BounceReaper.Editor
             DestroyByType<AudioManager>();
             DestroyByType<SaveManager>();
             DestroyIfExists("UpgradePanel");
+            DestroyByType<MainMenuController>();
 
             // Arena (portrait, no bottom wall)
             var arena = new GameObject("Arena");
@@ -422,6 +423,45 @@ namespace BounceReaper.Editor
 
             // Wire restart button
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, hud.OnRestartButton);
+
+            // Main Menu Panel
+            var menuPanelGO = new GameObject("MainMenuPanel");
+            menuPanelGO.transform.SetParent(canvasGO.transform, false);
+            var menuRect = menuPanelGO.AddComponent<RectTransform>();
+            menuRect.anchorMin = Vector2.zero;
+            menuRect.anchorMax = Vector2.one;
+            menuRect.sizeDelta = Vector2.zero;
+            var menuImg = menuPanelGO.AddComponent<UnityEngine.UI.Image>();
+            menuImg.color = new Color(0.03f, 0.03f, 0.08f, 0.95f);
+
+            var menuCtrl = menuPanelGO.AddComponent<MainMenuController>();
+
+            var titleGO = CreateAnchoredTMP("Title", menuPanelGO.transform,
+                new Vector2(0.5f, 0.7f), new Vector2(0.5f, 0.7f),
+                Vector2.zero, new Vector2(700, 120),
+                "BOUNCE\nREAPER", 64, TextAlignmentOptions.Center, new Color(0.3f, 0.8f, 1f));
+
+            var tapGO = CreateAnchoredTMP("TapText", menuPanelGO.transform,
+                new Vector2(0.5f, 0.4f), new Vector2(0.5f, 0.4f),
+                Vector2.zero, new Vector2(400, 60),
+                "TAP TO PLAY", 32, TextAlignmentOptions.Center, Color.white);
+
+            var bestGO = CreateAnchoredTMP("BestWave", menuPanelGO.transform,
+                new Vector2(0.5f, 0.25f), new Vector2(0.5f, 0.25f),
+                Vector2.zero, new Vector2(400, 50),
+                "", 24, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
+
+            var menuSo = new SerializedObject(menuCtrl);
+            menuSo.FindProperty("_menuPanel").objectReferenceValue = menuPanelGO;
+            menuSo.FindProperty("_titleText").objectReferenceValue = titleGO.GetComponent<TextMeshProUGUI>();
+            menuSo.FindProperty("_tapText").objectReferenceValue = tapGO.GetComponent<TextMeshProUGUI>();
+            menuSo.FindProperty("_bestWaveText").objectReferenceValue = bestGO.GetComponent<TextMeshProUGUI>();
+            menuSo.ApplyModifiedProperties();
+
+            // Wire MainMenu to TurnManager
+            tmSo = new SerializedObject(tm);
+            tmSo.FindProperty("_mainMenu").objectReferenceValue = menuCtrl;
+            tmSo.ApplyModifiedProperties();
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());

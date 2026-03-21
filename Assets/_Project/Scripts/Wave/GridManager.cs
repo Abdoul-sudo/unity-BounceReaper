@@ -173,12 +173,12 @@ namespace BounceReaper
 
             _initialized = true;
             Debug.Log("[Grid] Initialized");
+        }
 
-            // Spawn initial rows
-            for (int row = 0; row < 3; row++)
-            {
+        public void SpawnInitialRows(int count = 3)
+        {
+            for (int row = 0; row < count; row++)
                 SpawnNewRow();
-            }
         }
 
         private void SpawnBlock(int col, float y, int hp)

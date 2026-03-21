@@ -9,10 +9,14 @@ namespace BounceReaper
         [SerializeField] private AimController _aimController;
         [SerializeField] private UpgradePanel _upgradePanel;
 
+        [Header("Menu")]
+        [SerializeField] private MainMenuController _mainMenu;
+
         // 2. Private fields
         private TurnPhase _currentPhase = TurnPhase.None;
         private int _turnNumber;
         private bool _initialized;
+        private bool _gameStarted;
         private bool _gameOver;
 
         // 3. Properties
@@ -30,6 +34,18 @@ namespace BounceReaper
         {
             _initialized = true;
             _gameOver = false;
+            _gameStarted = false;
+            // Don't auto-start — wait for MainMenu tap
+        }
+
+        public void StartGame()
+        {
+            if (_gameStarted) return;
+            _gameStarted = true;
+
+            if (GridManager.IsAvailable)
+                GridManager.Instance.SpawnInitialRows();
+
             StartAimingPhase();
         }
 
@@ -74,6 +90,13 @@ namespace BounceReaper
             // Spawn new row of blocks
             if (GridManager.IsAvailable)
                 GridManager.Instance.SpawnNewRow();
+
+            // Update best wave
+            if (SaveManager.IsAvailable && SaveManager.Instance.Data != null)
+            {
+                if (_turnNumber > SaveManager.Instance.Data.highestWave)
+                    SaveManager.Instance.Data.highestWave = _turnNumber;
+            }
 
             if (_gameOver) return;
 

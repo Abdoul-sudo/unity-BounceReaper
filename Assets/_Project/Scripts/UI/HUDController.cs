@@ -115,13 +115,29 @@ namespace BounceReaper
 
             if (_gameOverScoreText != null)
             {
-                int wave = GridManager.IsAvailable ? GridManager.Instance.CurrentWave : 0;
+                int wave = TurnManager.IsAvailable ? TurnManager.Instance.TurnNumber : 0;
                 int shards = CurrencyManager.IsAvailable ? CurrencyManager.Instance.Shards : 0;
-                _gameOverScoreText.text = $"Wave {wave}\n{shards} Shards";
+                int bestWave = 0;
+                bool isNewRecord = false;
+
+                if (SaveManager.IsAvailable && SaveManager.Instance.Data != null)
+                {
+                    bestWave = SaveManager.Instance.Data.highestWave;
+                    isNewRecord = wave >= bestWave && wave > 0;
+                }
+
+                string recordText = isNewRecord ? "\n<color=#FFD700><size=120%>NEW RECORD!</size></color>" : $"\nBest: Wave {bestWave}";
+                _gameOverScoreText.text = $"Wave {wave}\n{shards} Shards{recordText}";
 
                 _gameOverScoreText.transform.localScale = Vector3.zero;
                 _gameOverScoreText.transform.DOScale(Vector3.one, 0.3f)
                     .SetEase(Ease.OutBack).SetDelay(0.3f).SetUpdate(true);
+
+                if (isNewRecord)
+                {
+                    _gameOverScoreText.transform.DOShakePosition(0.5f, 3f)
+                        .SetDelay(0.7f).SetUpdate(true);
+                }
             }
         }
     }
