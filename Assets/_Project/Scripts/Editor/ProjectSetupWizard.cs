@@ -323,11 +323,11 @@ namespace BounceReaper.Editor
                 new Vector2(120, 0), new Vector2(200, 50),
                 "0", 32, TextAlignmentOptions.Left, new Color(1f, 0.85f, 0.2f));
 
-            // Shards icon label
-            CreateAnchoredTMP("ShardsIcon", topBar.transform,
+            // Shards label
+            CreateAnchoredTMP("ShardsLabel", topBar.transform,
                 new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                new Vector2(30, 0), new Vector2(50, 50),
-                "\u25C6", 28, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f)); // diamond symbol
+                new Vector2(40, 0), new Vector2(80, 50),
+                "Shards", 18, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f, 0.6f));
 
             // Wave text (top center)
             var waveGO = CreateAnchoredTMP("WaveText", topBar.transform,

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -20,15 +19,13 @@ namespace BounceReaper
         [Header("Panel")]
         [SerializeField] private GameObject _panel;
 
-        // 4. Lifecycle
-        private void Start()
-        {
-            if (_panel != null) _panel.SetActive(false);
+        // 2. Private fields
+        private bool _buttonsWired;
 
-            if (_damageButton != null) _damageButton.onClick.AddListener(OnDamageClick);
-            if (_speedButton != null) _speedButton.onClick.AddListener(OnSpeedClick);
-            if (_ballsButton != null) _ballsButton.onClick.AddListener(OnBallsClick);
-            if (_skipButton != null) _skipButton.onClick.AddListener(OnSkipClick);
+        // 4. Lifecycle
+        private void OnEnable()
+        {
+            WireButtons();
         }
 
         // 5. Public API
@@ -36,36 +33,28 @@ namespace BounceReaper
         {
             if (_panel == null) return;
             _panel.SetActive(true);
+            WireButtons();
             RefreshButtons();
-
-            // Slide in from bottom
-            var rect = _panel.GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                DOTween.Kill(rect);
-                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, -500f);
-                rect.DOAnchorPosY(0f, 0.3f).SetEase(Ease.OutBack).SetUpdate(true);
-            }
+            Debug.Log("[Upgrade] Panel shown");
         }
 
         public void Hide()
         {
-            if (_panel == null) return;
-
-            var rect = _panel.GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                DOTween.Kill(rect);
-                rect.DOAnchorPosY(-500f, 0.2f).SetEase(Ease.InBack).SetUpdate(true)
-                    .OnComplete(() => _panel.SetActive(false));
-            }
-            else
-            {
-                _panel.SetActive(false);
-            }
+            if (_panel != null) _panel.SetActive(false);
         }
 
         // 6. Private methods
+        private void WireButtons()
+        {
+            if (_buttonsWired) return;
+            _buttonsWired = true;
+
+            if (_damageButton != null) _damageButton.onClick.AddListener(OnDamageClick);
+            if (_speedButton != null) _speedButton.onClick.AddListener(OnSpeedClick);
+            if (_ballsButton != null) _ballsButton.onClick.AddListener(OnBallsClick);
+            if (_skipButton != null) _skipButton.onClick.AddListener(OnSkipClick);
+        }
+
         private void RefreshButtons()
         {
             if (!UpgradeManager.IsAvailable) return;
@@ -92,7 +81,7 @@ namespace BounceReaper
             }
             else
             {
-                text.text = $"{config.DisplayName} Lv.{level}\n<size=70%>{cost} shards</size>";
+                text.text = $"{config.DisplayName} Lv.{level}\n<size=70%>{cost}</size>";
                 btn.interactable = canAfford;
             }
         }
@@ -126,31 +115,10 @@ namespace BounceReaper
 
         private void OnSkipClick()
         {
-            HideAndResume();
-        }
-
-        private void HideAndResume()
-        {
-            if (_panel == null) return;
-
-            var rect = _panel.GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                DOTween.Kill(rect);
-                rect.DOAnchorPosY(-500f, 0.2f).SetEase(Ease.InBack).SetUpdate(true)
-                    .OnComplete(() =>
-                    {
-                        _panel.SetActive(false);
-                        if (TurnManager.IsAvailable)
-                            TurnManager.Instance.StartAimingPhase();
-                    });
-            }
-            else
-            {
-                _panel.SetActive(false);
-                if (TurnManager.IsAvailable)
-                    TurnManager.Instance.StartAimingPhase();
-            }
+            Debug.Log("[Upgrade] Skip clicked");
+            Hide();
+            if (TurnManager.IsAvailable)
+                TurnManager.Instance.StartAimingPhase();
         }
     }
 }

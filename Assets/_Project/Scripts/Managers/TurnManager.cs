@@ -102,14 +102,15 @@ namespace BounceReaper
             }
 
             // Show upgrade panel between turns OR go straight to aiming
-            if (_upgradePanel != null)
+            if (_upgradePanel != null && CurrencyManager.IsAvailable && CurrencyManager.Instance.Shards > 0)
             {
                 _upgradePanel.Show();
                 Debug.Log("[Turn] Upgrade panel shown — waiting for player");
             }
             else
             {
-                Debug.Log("[Turn] No upgrade panel — going straight to aiming");
+                // No panel or no shards — skip directly to aiming
+                if (_upgradePanel != null) _upgradePanel.Hide();
                 StartAimingPhase();
             }
         }
