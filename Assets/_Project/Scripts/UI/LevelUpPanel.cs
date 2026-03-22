@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using DG.Tweening;
 
 namespace BounceReaper
 {
@@ -29,7 +28,14 @@ namespace BounceReaper
         // 5. Public API
         public void Show(SkillConfig[] choices)
         {
-            if (_panel == null || choices == null || choices.Length == 0) return;
+            if (_panel == null || choices == null || choices.Length == 0)
+            {
+                Debug.LogWarning("[LevelUp] Cannot show — panel or choices null");
+                // Fallback: consume level up and resume
+                if (SkillManager.IsAvailable) SkillManager.Instance.ConsumeLevelUp();
+                if (TurnManager.IsAvailable) TurnManager.Instance.StartAimingPhase();
+                return;
+            }
 
             _currentChoices = choices;
             _panel.SetActive(true);
@@ -37,7 +43,6 @@ namespace BounceReaper
             if (_levelText != null && SkillManager.IsAvailable)
                 _levelText.text = $"LEVEL {SkillManager.Instance.CurrentLevel}!";
 
-            // Setup buttons
             for (int i = 0; i < _skillButtons.Length; i++)
             {
                 if (i < choices.Length)
@@ -45,28 +50,21 @@ namespace BounceReaper
                     _skillButtons[i].gameObject.SetActive(true);
                     var skill = choices[i];
 
-                    if (_skillTexts[i] != null)
+                    if (i < _skillTexts.Length && _skillTexts[i] != null)
                     {
                         int stacks = SkillManager.IsAvailable ? SkillManager.Instance.GetStacks(skill.Type) : 0;
                         string stackText = stacks > 0 ? $" (x{stacks + 1})" : "";
                         _skillTexts[i].text = $"{skill.DisplayName}{stackText}\n<size=70%>{skill.Description}</size>";
                     }
 
-                    if (_skillImages[i] != null)
+                    if (i < _skillImages.Length && _skillImages[i] != null)
                         _skillImages[i].color = skill.SkillColor;
 
-                    int index = i; // capture for closure
+                    int index = i;
                     _skillButtons[i].onClick.RemoveAllListeners();
                     _skillButtons[i].onClick.AddListener(() => OnSkillChosen(index));
-
-                    // Pop-in animation
-                    _skillButtons[i].transform.localScale = Vector3.zero;
-                    _skillButtons[i].transform.DOScale(Vector3.one, 0.2f)
-                        .SetDelay(i * 0.1f)
-                        .SetEase(Ease.OutBack)
-                        .SetUpdate(true);
                 }
-                else
+                else if (i < _skillButtons.Length)
                 {
                     _skillButtons[i].gameObject.SetActive(false);
                 }
@@ -95,8 +93,16 @@ namespace BounceReaper
 
             Hide();
 
-            if (TurnManager.IsAvailable)
+            // Check if another level up is pending (multiple level ups at once)
+            if (SkillManager.IsAvailable && SkillManager.Instance.LevelUpPending)
+            {
+                var newChoices = SkillManager.Instance.GetRandomSkillChoices(3);
+                Show(newChoices);
+            }
+            else if (TurnManager.IsAvailable)
+            {
                 TurnManager.Instance.StartAimingPhase();
+            }
 
             Debug.Log($"[LevelUp] Chose: {skill.DisplayName}");
         }

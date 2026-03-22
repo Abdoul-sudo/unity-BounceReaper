@@ -73,9 +73,7 @@ namespace BounceReaper
             var health = other.GetComponent<EnemyHealth>();
             if (health != null && !health.IsDead)
             {
-                float damage = 999f; // instant kill pickups
-                Vector2 dir = (other.transform.position - transform.position).normalized;
-                health.TakeDamage(damage, dir);
+                health.TakeDamage(1f, Vector2.zero);
             }
         }
 

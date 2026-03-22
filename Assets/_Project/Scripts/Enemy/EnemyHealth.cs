@@ -17,7 +17,6 @@ namespace BounceReaper
         private int _currentHP;
         private int _shardReward;
         private bool _isDead;
-        private bool _dying;
         private EnemyController _controller;
         private SpriteRenderer _spriteRenderer;
         private Color _originalColor;
@@ -47,14 +46,13 @@ namespace BounceReaper
             _currentHP = maxHP;
             _shardReward = shardReward > 0 ? shardReward : maxHP;
             _isDead = false;
-            _dying = false;
             if (_spriteRenderer != null)
                 _originalColor = _spriteRenderer.color;
         }
 
         public void TakeDamage(float damage, Vector2 hitDirection)
         {
-            if (_isDead || _dying) return;
+            if (_isDead) return;
 
             _currentHP -= Mathf.RoundToInt(damage);
 
@@ -91,7 +89,6 @@ namespace BounceReaper
         private void Die()
         {
             _isDead = true;
-            _dying = true;
 
             // Award currency + XP
             if (CurrencyManager.IsAvailable && _shardReward > 0)
@@ -99,22 +96,12 @@ namespace BounceReaper
             if (SkillManager.IsAvailable)
                 SkillManager.Instance.AddXP(_shardReward);
 
-            // Death animation: scale up → shrink to 0 + fade
+            // Kill all tweens on this object
             DOTween.Kill(transform);
             if (_spriteRenderer != null)
                 DOTween.Kill(_spriteRenderer);
 
-            var seq = DOTween.Sequence();
-            seq.Append(transform.DOScale(transform.localScale * 1.2f, _deathDuration * 0.3f).SetEase(Ease.OutQuad));
-            seq.Append(transform.DOScale(Vector3.zero, _deathDuration * 0.7f).SetEase(Ease.InBack));
-            if (_spriteRenderer != null)
-                seq.Join(_spriteRenderer.DOFade(0f, _deathDuration * 0.7f));
-            seq.SetUpdate(true);
-            seq.OnComplete(() =>
-            {
-                _dying = false;
-                GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
-            });
+            GameEvents.Raise(GameEvents.OnBlockDestroyed, gameObject);
         }
 
         public void ResetHealth()
@@ -122,7 +109,6 @@ namespace BounceReaper
             _currentHP = 0;
             _shardReward = 0;
             _isDead = false;
-            _dying = false;
             DOTween.Kill(transform);
             if (_spriteRenderer != null)
             {
