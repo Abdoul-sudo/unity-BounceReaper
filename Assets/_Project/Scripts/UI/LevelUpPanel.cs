@@ -39,6 +39,7 @@ namespace BounceReaper
 
             _currentChoices = choices;
             _panel.SetActive(true);
+            _panel.transform.SetAsLastSibling(); // render on top of everything
 
             if (_levelText != null && SkillManager.IsAvailable)
                 _levelText.text = $"LEVEL {SkillManager.Instance.CurrentLevel}!";
