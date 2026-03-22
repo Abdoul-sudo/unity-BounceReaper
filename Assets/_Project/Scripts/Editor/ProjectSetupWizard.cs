@@ -309,6 +309,12 @@ namespace BounceReaper.Editor
             scaler.matchWidthOrHeight = 0.5f;
             canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
+            // EventSystem (required for UI clicks)
+            DestroyIfExists("EventSystem");
+            var esGO = new GameObject("EventSystem");
+            esGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            esGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+
             var hud = canvasGO.AddComponent<HUDController>();
 
             // Top bar background
