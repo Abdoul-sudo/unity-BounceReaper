@@ -19,12 +19,6 @@ namespace BounceReaper
         // 2. Private fields
         private SkillConfig[] _currentChoices;
 
-        // 4. Lifecycle
-        private void Start()
-        {
-            if (_panel != null) _panel.SetActive(false);
-        }
-
         // 5. Public API
         public void Show(SkillConfig[] choices)
         {
