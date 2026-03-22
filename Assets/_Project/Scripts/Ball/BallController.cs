@@ -17,6 +17,8 @@ namespace BounceReaper
         private bool _returned;
         private bool _hasLaunched;
         private float _floorY = -4.5f;
+        private float _launchTime;
+        private const float MaxBallLifetime = 15f;
 
         // 3. Properties
         public BallStats Stats => _stats;
@@ -36,14 +38,17 @@ namespace BounceReaper
 
             ClampSpeed();
 
-            // Check if ball hit the floor (only after it has gone up first)
+            // Check if ball hit the floor
             if (_hasLaunched && _rb.linearVelocity.y < 0 && transform.position.y <= _floorY)
             {
                 OnHitFloor();
             }
-            else if (!_hasLaunched && transform.position.y > _floorY + 0.5f)
+
+            // Safety timeout — force return if ball is stuck
+            if (_hasLaunched && Time.time - _launchTime > MaxBallLifetime)
             {
-                _hasLaunched = true;
+                Debug.LogWarning("[Ball] Timeout — forcing return");
+                OnHitFloor();
             }
         }
 
@@ -94,6 +99,8 @@ namespace BounceReaper
         public void Launch(Vector2 direction)
         {
             _returned = false;
+            _hasLaunched = true;
+            _launchTime = Time.time;
             float speed = _stats.BaseSpeed;
             if (UpgradeManager.IsAvailable)
                 speed += UpgradeManager.Instance.GetSpeedBonus();

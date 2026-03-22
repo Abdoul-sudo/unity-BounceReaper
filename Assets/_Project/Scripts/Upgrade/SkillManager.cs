@@ -18,14 +18,14 @@ namespace BounceReaper
         private int _currentXP;
         private int _currentLevel;
         private int _xpToNextLevel;
-        private bool _levelUpPending;
+        private int _pendingLevelUps;
 
         // 3. Properties
         public int CurrentXP => _currentXP;
         public int CurrentLevel => _currentLevel;
         public int XPToNextLevel => _xpToNextLevel;
         public float XPProgress => _xpToNextLevel > 0 ? (float)_currentXP / _xpToNextLevel : 0f;
-        public bool LevelUpPending => _levelUpPending;
+        public bool LevelUpPending => _pendingLevelUps > 0;
 
         // 4. Lifecycle
         protected override void Awake()
@@ -44,14 +44,14 @@ namespace BounceReaper
                 _currentXP -= _xpToNextLevel;
                 _currentLevel++;
                 _xpToNextLevel = GetXPForLevel(_currentLevel + 1);
-                _levelUpPending = true;
+                _pendingLevelUps++;
                 Debug.Log($"[Skill] LEVEL UP! Level {_currentLevel}");
             }
         }
 
         public void ConsumeLevelUp()
         {
-            _levelUpPending = false;
+            _pendingLevelUps = Mathf.Max(0, _pendingLevelUps - 1);
         }
 
         public SkillConfig[] GetRandomSkillChoices(int count = 3)
@@ -142,7 +142,7 @@ namespace BounceReaper
             _activeSkills.Clear();
             _currentXP = 0;
             _currentLevel = 0;
-            _levelUpPending = false;
+            _pendingLevelUps = 0;
             _xpToNextLevel = GetXPForLevel(1);
         }
 

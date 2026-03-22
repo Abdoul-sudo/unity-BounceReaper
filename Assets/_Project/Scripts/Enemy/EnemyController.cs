@@ -67,6 +67,7 @@ namespace BounceReaper
         public void InitializeAsPickup(int hp, Color color, Sprite sprite)
         {
             Initialize(hp, color, sprite);
+            _health.Initialize(hp, 0); // no shard/XP reward for pickups
 
             // Override HP text
             if (_hpText != null)

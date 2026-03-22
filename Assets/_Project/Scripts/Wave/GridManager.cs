@@ -74,7 +74,8 @@ namespace BounceReaper
         {
             _currentWave++;
 
-            // Move all existing blocks down
+            // Move ALL existing blocks down first
+            bool reachedBottom = false;
             for (int i = _activeBlocks.Count - 1; i >= 0; i--)
             {
                 var block = _activeBlocks[i];
@@ -85,13 +86,16 @@ namespace BounceReaper
                 }
                 block.transform.position += Vector3.down * _cellSize;
 
-                // Check game over
                 if (block.transform.position.y <= _gameOverY)
-                {
-                    Debug.Log("[Grid] Block reached bottom — GAME OVER");
-                    GameEvents.Raise(GameEvents.OnBlockReachedBottom);
-                    return;
-                }
+                    reachedBottom = true;
+            }
+
+            // Check game over AFTER all blocks moved
+            if (reachedBottom)
+            {
+                Debug.Log("[Grid] Block reached bottom — GAME OVER");
+                GameEvents.Raise(GameEvents.OnBlockReachedBottom);
+                return;
             }
 
             // Spawn new row at top
