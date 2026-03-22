@@ -372,6 +372,12 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - UI : Canvas sort order 100+
 - **Toujours setter Order in Layer** — sinon Z-fighting et flickering
 
+#### Gotchas UI Panels
+
+- **JAMAIS `Start()` pour cacher un panel UI créé inactif** — `Start()` se déclenche au premier `SetActive(true)` et re-cache le panel immédiatement → UI invisible → freeze
+- Le wizard fait déjà `SetActive(false)` — ne pas le refaire dans `Start()`
+- **EventSystem obligatoire** pour les clics UI — le Canvas seul ne suffit pas, il faut un GameObject avec `EventSystem` + `InputSystemUIInputModule`
+
 #### Gotchas Unity 6
 
 - `vSyncCount = 0` oublié → 30fps au lieu de 60
