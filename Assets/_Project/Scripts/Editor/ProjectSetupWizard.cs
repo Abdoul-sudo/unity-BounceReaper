@@ -317,17 +317,11 @@ namespace BounceReaper.Editor
                 new Vector2(0, -80), new Vector2(0, 0), // offset
                 new Color(0.05f, 0.05f, 0.15f, 0.8f));
 
-            // Shards text (top left)
+            // Shards text (top left) — single text "0 shards"
             var shardsGO = CreateAnchoredTMP("ShardsText", topBar.transform,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), // anchor left-center
-                new Vector2(120, 0), new Vector2(200, 50),
-                "0", 32, TextAlignmentOptions.Left, new Color(1f, 0.85f, 0.2f));
-
-            // Shards label
-            CreateAnchoredTMP("ShardsLabel", topBar.transform,
                 new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                new Vector2(40, 0), new Vector2(80, 50),
-                "Shards", 18, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f, 0.6f));
+                new Vector2(100, 0), new Vector2(200, 50),
+                "0", 28, TextAlignmentOptions.Left, new Color(1f, 0.85f, 0.2f));
 
             // Wave text (top center)
             var waveGO = CreateAnchoredTMP("WaveText", topBar.transform,

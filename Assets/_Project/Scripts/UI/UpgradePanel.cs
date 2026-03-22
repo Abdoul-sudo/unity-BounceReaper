@@ -81,7 +81,8 @@ namespace BounceReaper
             }
             else
             {
-                text.text = $"{config.DisplayName} Lv.{level}\n<size=70%>{cost}</size>";
+                string affordColor = canAfford ? "#4CFF4C" : "#FF4C4C";
+                text.text = $"{config.DisplayName} Lv.{level}\n<size=80%><color={affordColor}>{cost} shards</color></size>";
                 btn.interactable = canAfford;
             }
         }

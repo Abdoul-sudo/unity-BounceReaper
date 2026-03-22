@@ -54,7 +54,7 @@ namespace BounceReaper
         private void UpdateShards(int amount)
         {
             if (_shardsText != null)
-                _shardsText.text = $"{amount}";
+                _shardsText.text = $"{amount} shards";
         }
 
         private void UpdateWave(int wave)
