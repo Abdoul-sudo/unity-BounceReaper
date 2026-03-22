@@ -214,16 +214,34 @@ namespace BounceReaper
             var pickup = _pool.Get();
             float x = _gridStartX + col * _cellSize;
             pickup.transform.position = new Vector3(x, y, 0);
-            pickup.transform.localScale = Vector3.one * (_cellSize * 0.85f);
+            pickup.transform.localScale = Vector3.one * (_cellSize * 0.5f);
             pickup.gameObject.SetActive(true);
 
+            // Set layer but make collider a trigger (ball passes through)
             int enemyLayer = LayerMask.NameToLayer(GameConstants.LayerEnemy);
             if (enemyLayer >= 0) pickup.gameObject.layer = enemyLayer;
+
+            var col2d = pickup.GetComponent<Collider2D>();
+            if (col2d != null) col2d.isTrigger = true;
 
             pickup.gameObject.name = "Pickup_Ball";
             pickup.InitializeAsPickup(1, _pickupColor, _blockSprite);
 
             _activeBlocks.Add(pickup);
+        }
+
+        public void ApplyPoisonDamage(int poisonStacks)
+        {
+            for (int i = _activeBlocks.Count - 1; i >= 0; i--)
+            {
+                var block = _activeBlocks[i];
+                if (block == null || !block.gameObject.activeSelf) continue;
+                if (block.gameObject.name == "Pickup_Ball") continue;
+
+                var health = block.Health;
+                if (health != null && !health.IsDead)
+                    health.TakeDamage(poisonStacks, Vector2.zero);
+            }
         }
 
         private void HandleBlockDestroyed(GameObject blockGO)
@@ -240,7 +258,10 @@ namespace BounceReaper
 
             _activeBlocks.Remove(block);
             block.ResetBlock();
-            blockGO.name = "Block_Base"; // reset name
+            blockGO.name = "Block_Base";
+            // Reset trigger flag for reuse
+            var col2d = blockGO.GetComponent<Collider2D>();
+            if (col2d != null) col2d.isTrigger = false;
             _pool.Release(block);
         }
 

@@ -7,7 +7,7 @@ namespace BounceReaper
         // 1. SerializeField
         [Header("References")]
         [SerializeField] private AimController _aimController;
-        [SerializeField] private UpgradePanel _upgradePanel;
+        [SerializeField] private LevelUpPanel _levelUpPanel;
 
         [Header("Menu")]
         [SerializeField] private MainMenuController _mainMenu;
@@ -101,16 +101,22 @@ namespace BounceReaper
                 return;
             }
 
-            // Show upgrade panel between turns OR go straight to aiming
-            if (_upgradePanel != null && CurrencyManager.IsAvailable && CurrencyManager.Instance.Shards > 0)
+            // Apply poison damage to all blocks
+            if (SkillManager.IsAvailable && SkillManager.Instance.GetPoisonStacks() > 0)
             {
-                _upgradePanel.Show();
-                Debug.Log("[Turn] Upgrade panel shown — waiting for player");
+                if (GridManager.IsAvailable)
+                    GridManager.Instance.ApplyPoisonDamage(SkillManager.Instance.GetPoisonStacks());
+            }
+
+            // Level up? Show skill choice
+            if (SkillManager.IsAvailable && SkillManager.Instance.LevelUpPending && _levelUpPanel != null)
+            {
+                var choices = SkillManager.Instance.GetRandomSkillChoices(3);
+                _levelUpPanel.Show(choices);
+                Debug.Log("[Turn] Level up — showing skill choices");
             }
             else
             {
-                // No panel or no shards — skip directly to aiming
-                if (_upgradePanel != null) _upgradePanel.Hide();
                 StartAimingPhase();
             }
         }
@@ -119,13 +125,21 @@ namespace BounceReaper
         {
             if (_gameOver) return;
 
+            // Shield check
+            if (SkillManager.IsAvailable && SkillManager.Instance.GetShieldCount() > 0)
+            {
+                SkillManager.Instance.UseShield();
+                Debug.Log($"[Turn] Shield absorbed! {SkillManager.Instance.GetShieldCount()} remaining");
+                return;
+            }
+
             _gameOver = true;
             _currentPhase = TurnPhase.None;
 
             if (_aimController != null)
                 _aimController.DisableAiming();
-            if (_upgradePanel != null)
-                _upgradePanel.Hide();
+            if (_levelUpPanel != null)
+                _levelUpPanel.Hide();
 
             Debug.Log($"[Turn] GAME OVER at turn {_turnNumber}!");
             GameEvents.Raise(GameEvents.OnGameStateChanged, GameState.GameOver);

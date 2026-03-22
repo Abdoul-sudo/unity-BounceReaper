@@ -93,9 +93,11 @@ namespace BounceReaper
             _isDead = true;
             _dying = true;
 
-            // Award currency immediately
+            // Award currency + XP
             if (CurrencyManager.IsAvailable && _shardReward > 0)
                 CurrencyManager.Instance.AddShards(_shardReward);
+            if (SkillManager.IsAvailable)
+                SkillManager.Instance.AddXP(_shardReward);
 
             // Death animation: scale up → shrink to 0 + fade
             DOTween.Kill(transform);

@@ -56,10 +56,27 @@ namespace BounceReaper
             if (enemyHealth == null || enemyHealth.IsDead) return;
 
             float damage = _stats.BaseDamage;
-            if (UpgradeManager.IsAvailable)
-                damage += UpgradeManager.Instance.GetDamageBonus();
+            if (SkillManager.IsAvailable)
+            {
+                damage += SkillManager.Instance.GetDamageBonus();
+                if (SkillManager.Instance.RollFireBall())
+                    damage *= 2f;
+            }
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             enemyHealth.TakeDamage(damage, hitDirection);
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (!_initialized || _returned) return;
+            // Pickup pass-through (trigger colliders)
+            var health = other.GetComponent<EnemyHealth>();
+            if (health != null && !health.IsDead)
+            {
+                float damage = 999f; // instant kill pickups
+                Vector2 dir = (other.transform.position - transform.position).normalized;
+                health.TakeDamage(damage, dir);
+            }
         }
 
         private void OnDisable()
