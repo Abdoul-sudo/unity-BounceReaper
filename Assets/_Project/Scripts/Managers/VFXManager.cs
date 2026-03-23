@@ -59,8 +59,12 @@ namespace BounceReaper
             var tmp = _damagePool.Get();
             tmp.transform.position = position + Vector3.up * 0.3f;
             tmp.gameObject.SetActive(true);
-            tmp.text = Mathf.RoundToInt(damage).ToString();
-            tmp.color = Color.white;
+            int dmgInt = Mathf.RoundToInt(damage);
+            tmp.text = dmgInt.ToString();
+            tmp.fontSize = dmgInt >= 10 ? 7 : (dmgInt >= 5 ? 6 : 5);
+            tmp.color = dmgInt >= 10 ? new Color(1f, 0.3f, 0.3f) :
+                        dmgInt >= 5  ? new Color(1f, 0.8f, 0.2f) :
+                                       Color.white;
             tmp.sortingOrder = GameConstants.SortOrderDamageNumbers;
 
             // Animate: float up + fade out
@@ -112,6 +116,33 @@ namespace BounceReaper
         private void HandleBlockDestroyed(GameObject blockGO)
         {
             ShakeCamera();
+            SpawnDeathFlash(blockGO.transform.position, blockGO.GetComponent<SpriteRenderer>());
+        }
+
+        private void SpawnDeathFlash(Vector3 position, SpriteRenderer blockSR)
+        {
+            Color flashColor = blockSR != null ? blockSR.color : Color.white;
+            // Spawn a damage number with "!" as a flash indicator
+            if (_damagePool == null) return;
+            var tmp = _damagePool.Get();
+            tmp.transform.position = position;
+            tmp.gameObject.SetActive(true);
+            tmp.text = "\u2716"; // ✖ cross mark
+            tmp.fontSize = 8;
+            tmp.color = flashColor;
+            tmp.sortingOrder = GameConstants.SortOrderDamageNumbers;
+
+            var seq = DOTween.Sequence();
+            seq.Append(tmp.transform.DOScale(Vector3.one * 2f, 0.15f).SetEase(Ease.OutQuad));
+            seq.Append(tmp.transform.DOScale(Vector3.zero, 0.15f).SetEase(Ease.InQuad));
+            seq.Join(tmp.DOFade(0f, 0.15f));
+            seq.SetUpdate(true);
+            seq.OnComplete(() =>
+            {
+                tmp.transform.localScale = Vector3.one;
+                tmp.gameObject.SetActive(false);
+                _damagePool.Release(tmp);
+            });
         }
     }
 }

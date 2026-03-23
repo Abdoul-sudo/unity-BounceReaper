@@ -94,9 +94,9 @@ namespace BounceReaper.Editor
                 var sr = ballGO.AddComponent<SpriteRenderer>();
                 sr.sprite = LoadBrackeysSprite("Shapes/Circle.png")
                     ?? AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-                sr.color = new Color(0.3f, 0.8f, 1f);
+                sr.color = new Color(0.5f, 1.5f, 2f); // HDR cyan for bloom glow
                 sr.sortingOrder = GameConstants.SortOrderBalls;
-                ballGO.transform.localScale = Vector3.one * 0.25f;
+                ballGO.transform.localScale = Vector3.one * 0.35f;
 
                 var rb = ballGO.AddComponent<Rigidbody2D>();
                 rb.gravityScale = 0f;
@@ -110,13 +110,13 @@ namespace BounceReaper.Editor
                 col.sharedMaterial = ballPhysMat;
                 ballGO.AddComponent<BallController>();
 
-                // Trail
+                // Trail — neon glow
                 var trail = ballGO.AddComponent<TrailRenderer>();
-                trail.time = 0.3f;
-                trail.startWidth = 0.12f;
+                trail.time = 0.5f;
+                trail.startWidth = 0.2f;
                 trail.endWidth = 0f;
-                trail.startColor = new Color(0.3f, 0.8f, 1f, 0.8f);
-                trail.endColor = new Color(0.3f, 0.8f, 1f, 0f);
+                trail.startColor = new Color(0.5f, 1.5f, 2f, 0.9f); // HDR
+                trail.endColor = new Color(0.3f, 1f, 1.5f, 0f);
                 trail.material = new Material(Shader.Find("Sprites/Default"));
                 trail.sortingOrder = GameConstants.SortOrderVFX;
                 trail.minVertexDistance = 0.05f;
@@ -312,6 +312,9 @@ namespace BounceReaper.Editor
             }
 
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+
+            // Neon Bloom setup
+            NeonSetup.ApplyNeonLook();
 
             // HUD Canvas
             DestroyIfExists("HUD_Canvas");
@@ -627,7 +630,7 @@ namespace BounceReaper.Editor
             wall.transform.position = pos;
             var sr = wall.AddComponent<SpriteRenderer>();
             sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
-            sr.color = new Color(0.15f, 0.15f, 0.25f);
+            sr.color = new Color(0.1f, 0.15f, 0.3f, 0.6f); // semi-transparent neon dim
             sr.drawMode = SpriteDrawMode.Sliced;
             sr.size = size;
             sr.sortingOrder = GameConstants.SortOrderBackground;

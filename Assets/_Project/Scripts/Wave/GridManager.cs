@@ -38,14 +38,15 @@ namespace BounceReaper
         private float _gridStartX;
         private bool _initialized;
 
-        // Color gradient for HP
+        // Neon color gradient for HP
         private static readonly Color[] HPColors = {
-            new Color(0.3f, 0.8f, 0.3f), // green - low HP
-            new Color(0.3f, 0.6f, 1f),   // blue
-            new Color(1f, 0.8f, 0.2f),   // yellow
-            new Color(1f, 0.4f, 0.1f),   // orange
-            new Color(1f, 0.2f, 0.2f),   // red
-            new Color(0.8f, 0.2f, 1f),   // purple - high HP
+            new Color(0.2f, 1f, 0.4f),   // neon green - low HP
+            new Color(0.2f, 0.8f, 1f),   // neon cyan
+            new Color(0.4f, 0.4f, 1f),   // neon blue
+            new Color(1f, 0.7f, 0.1f),   // neon yellow
+            new Color(1f, 0.3f, 0.2f),   // neon orange-red
+            new Color(1f, 0.1f, 0.4f),   // neon pink
+            new Color(0.7f, 0.2f, 1f),   // neon purple - high HP
         };
 
         // 3. Properties
