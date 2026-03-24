@@ -181,8 +181,7 @@ namespace BounceReaper.Editor
             DestroyByType<AimController>();
             DestroyByType<TurnManager>();
             DestroyByType<CurrencyManager>();
-            DestroyByType<UpgradeManager>();
-            DestroyByType<SkillManager>();
+            // Old systems cleaned up
             DestroyByType<ShopPanel>();
             DestroyByType<VFXManager>();
             DestroyByType<AudioManager>();
@@ -519,37 +518,7 @@ namespace BounceReaper.Editor
             return go;
         }
 
-        private static void CreateSkillSO(string fileName, SkillType type, string displayName, string desc, float weight, int maxStacks, Color color)
-        {
-            string path = $"{SOPath}/Skills/{fileName}.asset";
-            if (AssetExists(path)) return;
-            var config = ScriptableObject.CreateInstance<SkillConfig>();
-            var so = new SerializedObject(config);
-            so.FindProperty("_type").enumValueIndex = (int)type;
-            so.FindProperty("_displayName").stringValue = displayName;
-            so.FindProperty("_description").stringValue = desc;
-            so.FindProperty("_weight").floatValue = weight;
-            so.FindProperty("_maxStacks").intValue = maxStacks;
-            so.FindProperty("_color").colorValue = color;
-            so.ApplyModifiedProperties();
-            AssetDatabase.CreateAsset(config, path);
-        }
-
-        private static void CreateUpgradeSO(string fileName, string displayName, int baseCost, float costScale, int maxLevel, float effectPerLevel)
-        {
-            string path = $"{SOPath}/Upgrades/{fileName}.asset";
-            if (AssetExists(path)) return;
-            var config = ScriptableObject.CreateInstance<UpgradeConfig>();
-            var so = new SerializedObject(config);
-            so.FindProperty("_upgradeId").stringValue = displayName.ToLower().Replace(" ", "_");
-            so.FindProperty("_displayName").stringValue = displayName;
-            so.FindProperty("_baseCost").intValue = baseCost;
-            so.FindProperty("_costScale").floatValue = costScale;
-            so.FindProperty("_maxLevel").intValue = maxLevel;
-            so.FindProperty("_effectPerLevel").floatValue = effectPerLevel;
-            so.ApplyModifiedProperties();
-            AssetDatabase.CreateAsset(config, path);
-        }
+        // (CreateSkillSO + CreateUpgradeSO removed — shop system replaces them)
 
         private static GameObject CreateUpgradeButton(string name, Transform parent, Vector2 pos, string text, Color color)
         {
