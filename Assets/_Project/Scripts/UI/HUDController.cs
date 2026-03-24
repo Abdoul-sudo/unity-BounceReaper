@@ -13,8 +13,7 @@ namespace BounceReaper
         [SerializeField] private TextMeshProUGUI _ballCountText;
         [SerializeField] private GameObject _gameOverPanel;
         [SerializeField] private TextMeshProUGUI _gameOverScoreText;
-        [SerializeField] private RectTransform _xpBarFill;
-        [SerializeField] private TextMeshProUGUI _xpLevelText;
+
 
         // 4. Lifecycle
         private void Start()
@@ -35,7 +34,6 @@ namespace BounceReaper
             GameEvents.OnWaveComplete += HandleWaveComplete;
             GameEvents.OnBallCountChanged += HandleBallCountChanged;
             GameEvents.OnGameStateChanged += HandleGameStateChanged;
-            GameEvents.OnBlockDestroyed += HandleBlockDestroyed;
         }
 
         private void OnDisable()
@@ -44,7 +42,6 @@ namespace BounceReaper
             GameEvents.OnWaveComplete -= HandleWaveComplete;
             GameEvents.OnBallCountChanged -= HandleBallCountChanged;
             GameEvents.OnGameStateChanged -= HandleGameStateChanged;
-            GameEvents.OnBlockDestroyed -= HandleBlockDestroyed;
         }
 
         // 5. Public API
@@ -87,26 +84,6 @@ namespace BounceReaper
         private void HandleBallCountChanged(int count)
         {
             UpdateBallCount(count);
-        }
-
-        private void HandleBlockDestroyed(GameObject go)
-        {
-            UpdateXPBar();
-        }
-
-        private void UpdateXPBar()
-        {
-            if (!SkillManager.IsAvailable) return;
-            var sm = SkillManager.Instance;
-
-            if (_xpBarFill != null)
-            {
-                _xpBarFill.anchorMax = new Vector2(sm.XPProgress, 1f);
-            }
-            if (_xpLevelText != null)
-            {
-                _xpLevelText.text = $"Lv.{sm.CurrentLevel}";
-            }
         }
 
         private void HandleGameStateChanged(GameState state)
@@ -153,7 +130,7 @@ namespace BounceReaper
                 }
 
                 string recordText = isNewRecord ? "\n<color=#FFD700><size=120%>NEW RECORD!</size></color>" : $"\nBest: Wave {bestWave}";
-                _gameOverScoreText.text = $"Wave {wave}\n{shards} Shards{recordText}";
+                _gameOverScoreText.text = $"Wave {wave}{recordText}";
 
                 _gameOverScoreText.transform.localScale = Vector3.zero;
                 _gameOverScoreText.transform.DOScale(Vector3.one, 0.3f)

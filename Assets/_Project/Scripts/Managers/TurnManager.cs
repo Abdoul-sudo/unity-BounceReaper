@@ -7,7 +7,6 @@ namespace BounceReaper
         // 1. SerializeField
         [Header("References")]
         [SerializeField] private AimController _aimController;
-        [SerializeField] private LevelUpPanel _levelUpPanel;
 
         [Header("Menu")]
         [SerializeField] private MainMenuController _mainMenu;
@@ -42,6 +41,11 @@ namespace BounceReaper
         {
             if (_gameStarted) return;
             _gameStarted = true;
+
+            if (ShopPanel.IsAvailable)
+                ShopPanel.Instance.ResetRun();
+            if (CurrencyManager.IsAvailable)
+                CurrencyManager.Instance.ResetShards();
 
             if (GridManager.IsAvailable)
                 GridManager.Instance.SpawnInitialRows();
@@ -101,24 +105,14 @@ namespace BounceReaper
                 return;
             }
 
-            // Apply poison damage to all blocks
-            if (SkillManager.IsAvailable && SkillManager.Instance.GetPoisonStacks() > 0)
+            // Apply poison damage
+            if (ShopPanel.IsAvailable && ShopPanel.Instance.PoisonStacks > 0)
             {
                 if (GridManager.IsAvailable)
-                    GridManager.Instance.ApplyPoisonDamage(SkillManager.Instance.GetPoisonStacks());
+                    GridManager.Instance.ApplyPoisonDamage(ShopPanel.Instance.PoisonStacks);
             }
 
-            // Level up? Show skill choice
-            if (SkillManager.IsAvailable && SkillManager.Instance.LevelUpPending && _levelUpPanel != null)
-            {
-                var choices = SkillManager.Instance.GetRandomSkillChoices(3);
-                _levelUpPanel.Show(choices);
-                Debug.Log("[Turn] Level up — showing skill choices");
-            }
-            else
-            {
-                StartAimingPhase();
-            }
+            StartAimingPhase();
         }
 
         private void HandleGameOver()
@@ -126,10 +120,10 @@ namespace BounceReaper
             if (_gameOver) return;
 
             // Shield check
-            if (SkillManager.IsAvailable && SkillManager.Instance.GetShieldCount() > 0)
+            if (ShopPanel.IsAvailable && ShopPanel.Instance.ShieldCount > 0)
             {
-                SkillManager.Instance.UseShield();
-                Debug.Log($"[Turn] Shield absorbed! {SkillManager.Instance.GetShieldCount()} remaining");
+                ShopPanel.Instance.UseShield();
+                Debug.Log($"[Turn] Shield absorbed! {ShopPanel.Instance.ShieldCount} remaining");
                 return;
             }
 
@@ -138,8 +132,8 @@ namespace BounceReaper
 
             if (_aimController != null)
                 _aimController.DisableAiming();
-            if (_levelUpPanel != null)
-                _levelUpPanel.Hide();
+            if (ShopPanel.IsAvailable)
+                ShopPanel.Instance.Close();
 
             Debug.Log($"[Turn] GAME OVER at turn {_turnNumber}!");
             GameEvents.Raise(GameEvents.OnGameStateChanged, GameState.GameOver);

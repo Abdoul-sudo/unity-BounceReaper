@@ -53,6 +53,13 @@ namespace BounceReaper
             return _shards >= amount;
         }
 
+        public void ResetShards()
+        {
+            _shards = 0;
+            _shardsThisTurn = 0;
+            GameEvents.Raise(GameEvents.OnCurrencyChanged, CurrencyType.Shards, _shards);
+        }
+
         // 6. Private methods
         private void HandleTurnEnd()
         {

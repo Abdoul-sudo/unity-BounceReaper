@@ -93,9 +93,6 @@ namespace BounceReaper
             // Award currency + XP
             if (CurrencyManager.IsAvailable && _shardReward > 0)
                 CurrencyManager.Instance.AddShards(_shardReward);
-            if (SkillManager.IsAvailable)
-                SkillManager.Instance.AddXP(_shardReward);
-
             // Kill all tweens on this object
             DOTween.Kill(transform);
             if (_spriteRenderer != null)

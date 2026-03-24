@@ -183,10 +183,10 @@ namespace BounceReaper.Editor
             DestroyByType<CurrencyManager>();
             DestroyByType<UpgradeManager>();
             DestroyByType<SkillManager>();
+            DestroyByType<ShopPanel>();
             DestroyByType<VFXManager>();
             DestroyByType<AudioManager>();
             DestroyByType<SaveManager>();
-            DestroyIfExists("UpgradePanel");
             DestroyByType<MainMenuController>();
 
             // Arena (portrait, no bottom wall)
@@ -249,28 +249,7 @@ namespace BounceReaper.Editor
             var currGO = new GameObject("CurrencyManager");
             currGO.AddComponent<CurrencyManager>();
 
-            // SkillManager + Skill SOs
-            EnsureDirectory($"{SOPath}/Skills");
-            CreateSkillSO("Skill_DamageUp", SkillType.DamageUp, "Damage Up", "+1 damage per ball", 1f, 10, new Color(1f, 0.4f, 0.3f));
-            CreateSkillSO("Skill_ExtraBall", SkillType.ExtraBall, "Extra Ball", "+1 ball", 1f, 10, new Color(0.3f, 0.8f, 1f));
-            CreateSkillSO("Skill_FireBall", SkillType.FireBall, "Fire Ball", "25% chance x2 damage", 0.6f, 3, new Color(1f, 0.6f, 0.1f));
-            CreateSkillSO("Skill_Shield", SkillType.Shield, "Shield", "Survive 1 block reaching bottom", 0.4f, 3, new Color(0.3f, 1f, 0.5f));
-            CreateSkillSO("Skill_Poison", SkillType.Poison, "Poison", "All blocks lose 1 HP per turn", 0.5f, 3, new Color(0.6f, 0.2f, 1f));
-            AssetDatabase.SaveAssets();
-
-            var skillGO = new GameObject("SkillManager");
-            var skillMgr = skillGO.AddComponent<SkillManager>();
-            var skillSo = new SerializedObject(skillMgr);
-            // Assign all skills array
-            var skillPaths = new[] { "Skill_DamageUp", "Skill_ExtraBall", "Skill_FireBall", "Skill_Shield", "Skill_Poison" };
-            var allSkillsProp = skillSo.FindProperty("_allSkills");
-            allSkillsProp.arraySize = skillPaths.Length;
-            for (int i = 0; i < skillPaths.Length; i++)
-            {
-                var skillAsset = AssetDatabase.LoadAssetAtPath<SkillConfig>($"{SOPath}/Skills/{skillPaths[i]}.asset");
-                allSkillsProp.GetArrayElementAtIndex(i).objectReferenceValue = skillAsset;
-            }
-            skillSo.ApplyModifiedProperties();
+            // ShopPanel is created with the HUD Canvas below
 
             // VFXManager + damage number prefab
             EnsureDirectory($"{PrefabPath}/VFX");
@@ -398,72 +377,50 @@ namespace BounceReaper.Editor
 
             goPanelGO.SetActive(false);
 
-            // XP Bar (bottom, above ball count)
-            var xpBarBG = CreatePanel("XPBarBG", canvasGO.transform,
-                new Vector2(0.1f, 0), new Vector2(0.9f, 0),
-                new Vector2(0, 130), new Vector2(0, 140),
-                new Color(0.2f, 0.2f, 0.3f, 0.8f));
-            var xpBarFill = CreatePanel("XPBarFill", xpBarBG.transform,
-                new Vector2(0, 0), new Vector2(0, 1),
-                Vector2.zero, Vector2.zero,
-                new Color(0.3f, 1f, 0.5f, 0.9f));
-            var xpLevelText = CreateAnchoredTMP("XPLevel", canvasGO.transform,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 150), new Vector2(200, 30),
-                "Lv.0", 18, TextAlignmentOptions.Center, new Color(0.3f, 1f, 0.5f));
+            // Shop Panel + Open Button
+            var shopPanelGO = new GameObject("ShopPanel");
+            shopPanelGO.transform.SetParent(canvasGO.transform, false);
+            var shopRect = shopPanelGO.AddComponent<RectTransform>();
+            shopRect.anchorMin = new Vector2(0, 0);
+            shopRect.anchorMax = new Vector2(1, 0.45f);
+            shopRect.offsetMin = Vector2.zero;
+            shopRect.offsetMax = Vector2.zero;
+            shopPanelGO.AddComponent<UnityEngine.UI.Image>().color = new Color(0.03f, 0.03f, 0.1f, 0.95f);
+            var shopComp = shopPanelGO.AddComponent<ShopPanel>();
 
-            // Level Up Panel (fullscreen overlay)
-            var lvlPanelGO = new GameObject("LevelUpPanel");
-            lvlPanelGO.transform.SetParent(canvasGO.transform, false);
-            var lvlRect = lvlPanelGO.AddComponent<RectTransform>();
-            lvlRect.anchorMin = Vector2.zero;
-            lvlRect.anchorMax = Vector2.one;
-            lvlRect.sizeDelta = Vector2.zero;
-            var lvlImg = lvlPanelGO.AddComponent<UnityEngine.UI.Image>();
-            lvlImg.color = new Color(0.02f, 0.02f, 0.08f, 0.9f);
+            var closeBtn = CreateUpgradeButton("CloseBtn", shopPanelGO.transform, new Vector2(0, -20), "CLOSE", new Color(0.4f, 0.4f, 0.5f));
+            closeBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 50);
+            var dmgBtn = CreateUpgradeButton("DamageBtn", shopPanelGO.transform, new Vector2(-130, 200), "Damage +1\n5", new Color(1f, 0.4f, 0.3f));
+            var eBallBtn = CreateUpgradeButton("BallBtn", shopPanelGO.transform, new Vector2(130, 200), "Extra Ball\n15", new Color(0.3f, 0.8f, 1f));
+            var fireBtn2 = CreateUpgradeButton("FireBtn", shopPanelGO.transform, new Vector2(-170, 90), "Fire Ball\n30", new Color(1f, 0.6f, 0.1f));
+            var shieldBtn2 = CreateUpgradeButton("ShieldBtn", shopPanelGO.transform, new Vector2(0, 90), "Shield\n20", new Color(0.3f, 1f, 0.5f));
+            var poisonBtn2 = CreateUpgradeButton("PoisonBtn", shopPanelGO.transform, new Vector2(170, 90), "Poison\n25", new Color(0.6f, 0.2f, 1f));
 
-            var lvlPanel = lvlPanelGO.AddComponent<LevelUpPanel>();
+            var shopSo = new SerializedObject(shopComp);
+            shopSo.FindProperty("_panel").objectReferenceValue = shopPanelGO;
+            shopSo.FindProperty("_closeButton").objectReferenceValue = closeBtn.GetComponent<Button>();
+            shopSo.FindProperty("_damageBtn").objectReferenceValue = dmgBtn.GetComponent<Button>();
+            shopSo.FindProperty("_damageTxt").objectReferenceValue = dmgBtn.GetComponentInChildren<TextMeshProUGUI>();
+            shopSo.FindProperty("_extraBallBtn").objectReferenceValue = eBallBtn.GetComponent<Button>();
+            shopSo.FindProperty("_extraBallTxt").objectReferenceValue = eBallBtn.GetComponentInChildren<TextMeshProUGUI>();
+            shopSo.FindProperty("_fireBtn").objectReferenceValue = fireBtn2.GetComponent<Button>();
+            shopSo.FindProperty("_fireTxt").objectReferenceValue = fireBtn2.GetComponentInChildren<TextMeshProUGUI>();
+            shopSo.FindProperty("_shieldBtn").objectReferenceValue = shieldBtn2.GetComponent<Button>();
+            shopSo.FindProperty("_shieldTxt").objectReferenceValue = shieldBtn2.GetComponentInChildren<TextMeshProUGUI>();
+            shopSo.FindProperty("_poisonBtn").objectReferenceValue = poisonBtn2.GetComponent<Button>();
+            shopSo.FindProperty("_poisonTxt").objectReferenceValue = poisonBtn2.GetComponentInChildren<TextMeshProUGUI>();
+            shopSo.ApplyModifiedProperties();
+            shopPanelGO.SetActive(false);
 
-            var lvlTitle = CreateAnchoredTMP("LevelTitle", lvlPanelGO.transform,
-                new Vector2(0.5f, 0.8f), new Vector2(0.5f, 0.8f),
-                Vector2.zero, new Vector2(500, 80),
-                "LEVEL UP!", 48, TextAlignmentOptions.Center, new Color(0.3f, 1f, 0.5f));
+            var shopOpenBtn = CreateUpgradeButton("ShopOpenBtn", canvasGO.transform, Vector2.zero, "SHOP", new Color(0.2f, 0.5f, 1f));
+            var openBtnRect = shopOpenBtn.GetComponent<RectTransform>();
+            openBtnRect.anchorMin = new Vector2(1, 0); openBtnRect.anchorMax = new Vector2(1, 0);
+            openBtnRect.anchoredPosition = new Vector2(-80, 50); openBtnRect.sizeDelta = new Vector2(120, 50);
+            var shopSo2 = new SerializedObject(shopComp);
+            shopSo2.FindProperty("_openButton").objectReferenceValue = shopOpenBtn.GetComponent<Button>();
+            shopSo2.ApplyModifiedProperties();
 
-            // 3 skill buttons
-            var skillBtns = new Button[3];
-            var skillTexts = new TextMeshProUGUI[3];
-            var skillImgs = new Image[3];
-            float[] yPositions = { 250, 50, -150 };
-
-            for (int i = 0; i < 3; i++)
-            {
-                var sBtn = CreateUpgradeButton($"Skill{i}", lvlPanelGO.transform,
-                    new Vector2(0, yPositions[i]), "Skill Name\nDescription", Color.grey);
-                sBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 120);
-                skillBtns[i] = sBtn.GetComponent<Button>();
-                skillTexts[i] = sBtn.GetComponentInChildren<TextMeshProUGUI>();
-                skillTexts[i].fontSize = 22;
-                skillImgs[i] = sBtn.GetComponent<Image>();
-            }
-
-            var lvlPanelSo = new SerializedObject(lvlPanel);
-            lvlPanelSo.FindProperty("_panel").objectReferenceValue = lvlPanelGO;
-            lvlPanelSo.FindProperty("_levelText").objectReferenceValue = lvlTitle.GetComponent<TextMeshProUGUI>();
-
-            var btnsProp = lvlPanelSo.FindProperty("_skillButtons");
-            btnsProp.arraySize = 3;
-            var txtsProp = lvlPanelSo.FindProperty("_skillTexts");
-            txtsProp.arraySize = 3;
-            var imgsProp = lvlPanelSo.FindProperty("_skillImages");
-            imgsProp.arraySize = 3;
-            for (int i = 0; i < 3; i++)
-            {
-                btnsProp.GetArrayElementAtIndex(i).objectReferenceValue = skillBtns[i];
-                txtsProp.GetArrayElementAtIndex(i).objectReferenceValue = skillTexts[i];
-                imgsProp.GetArrayElementAtIndex(i).objectReferenceValue = skillImgs[i];
-            }
-            lvlPanelSo.ApplyModifiedProperties();
-            lvlPanelGO.SetActive(false);
+            // (XP bar + Level Up Panel removed — replaced by ShopPanel above)
 
             // Wire HUD references
             var hudSo = new SerializedObject(hud);
@@ -472,8 +429,6 @@ namespace BounceReaper.Editor
             hudSo.FindProperty("_ballCountText").objectReferenceValue = ballGO.GetComponent<TextMeshProUGUI>();
             hudSo.FindProperty("_gameOverPanel").objectReferenceValue = goPanelGO;
             hudSo.FindProperty("_gameOverScoreText").objectReferenceValue = goScoreGO.GetComponent<TextMeshProUGUI>();
-            hudSo.FindProperty("_xpBarFill").objectReferenceValue = xpBarFill.GetComponent<RectTransform>();
-            hudSo.FindProperty("_xpLevelText").objectReferenceValue = xpLevelText.GetComponent<TextMeshProUGUI>();
             hudSo.ApplyModifiedProperties();
 
             // Wire restart button
@@ -515,7 +470,6 @@ namespace BounceReaper.Editor
 
             // Wire TurnManager references
             var tmSo2 = new SerializedObject(tm);
-            tmSo2.FindProperty("_levelUpPanel").objectReferenceValue = lvlPanel;
             tmSo2.FindProperty("_mainMenu").objectReferenceValue = menuCtrl;
             tmSo2.ApplyModifiedProperties();
 

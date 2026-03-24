@@ -61,10 +61,10 @@ namespace BounceReaper
             if (enemyHealth == null || enemyHealth.IsDead) return;
 
             float damage = _stats.BaseDamage;
-            if (SkillManager.IsAvailable)
+            if (ShopPanel.IsAvailable)
             {
-                damage += SkillManager.Instance.GetDamageBonus();
-                if (SkillManager.Instance.RollFireBall())
+                damage += ShopPanel.Instance.DamageBonus;
+                if (ShopPanel.Instance.RollFireBall())
                     damage *= 2f;
             }
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
@@ -102,8 +102,6 @@ namespace BounceReaper
             _hasLaunched = true;
             _launchTime = Time.time;
             float speed = _stats.BaseSpeed;
-            if (UpgradeManager.IsAvailable)
-                speed += UpgradeManager.Instance.GetSpeedBonus();
             _rb.linearVelocity = direction.normalized * speed;
         }
 
